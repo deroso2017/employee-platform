@@ -1,0 +1,21 @@
+# Java
+.gradle/
+build/
+out/
+
+# IntelliJ
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# Node
+frontend/node_modules/
+
+# Environment
+.env
+
+# OS
+.DS_Store
+Thumbs.db
