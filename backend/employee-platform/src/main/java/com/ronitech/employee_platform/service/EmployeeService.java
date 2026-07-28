@@ -1,5 +1,6 @@
 package com.ronitech.employee_platform.service;
 
+import com.ronitech.employee_platform.dto.EmployeeRequest;
 import com.ronitech.employee_platform.dto.EmployeeResponse;
 import com.ronitech.employee_platform.entity.Employee;
 import com.ronitech.employee_platform.repository.EmployeeRepository;
@@ -16,6 +17,8 @@ public class EmployeeService {
         this.repository = repository;
     }
 
+    // Old approach:
+    // This returns the database Entity directly to the Controller.
     // public List<Employee> findAll() {
     // return repository.findAll();
     // }
@@ -26,6 +29,16 @@ public class EmployeeService {
                 .stream()
                 .map(EmployeeMapper::toResponse)
                 .toList();
+
+    }
+
+    public EmployeeResponse create(EmployeeRequest request) {
+
+        Employee employee = EmployeeMapper.toEntity(request);
+
+        Employee savedEmployee = repository.save(employee);
+
+        return EmployeeMapper.toResponse(savedEmployee);
 
     }
 }
