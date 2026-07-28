@@ -3,6 +3,7 @@ package com.ronitech.employee_platform.service;
 import com.ronitech.employee_platform.dto.EmployeeRequest;
 import com.ronitech.employee_platform.dto.EmployeeResponse;
 import com.ronitech.employee_platform.entity.Employee;
+import com.ronitech.employee_platform.mapper.EmployeeMapper;
 import com.ronitech.employee_platform.repository.EmployeeRepository;
 import org.springframework.stereotype.Service;
 
@@ -12,9 +13,11 @@ import java.util.List;
 public class EmployeeService {
 
     private final EmployeeRepository repository;
+    private final EmployeeMapper mapper;
 
-    public EmployeeService(EmployeeRepository repository) {
+    public EmployeeService(EmployeeRepository repository, EmployeeMapper mapper) {
         this.repository = repository;
+        this.mapper = mapper;
     }
 
     // Old approach:
@@ -27,18 +30,18 @@ public class EmployeeService {
 
         return repository.findAll()
                 .stream()
-                .map(EmployeeMapper::toResponse)
+                .map(mapper::toResponse)
                 .toList();
 
     }
 
     public EmployeeResponse create(EmployeeRequest request) {
 
-        Employee employee = EmployeeMapper.toEntity(request);
+        Employee employee = mapper.toEntity(request);
 
         Employee savedEmployee = repository.save(employee);
 
-        return EmployeeMapper.toResponse(savedEmployee);
+        return mapper.toResponse(savedEmployee);
 
     }
 }

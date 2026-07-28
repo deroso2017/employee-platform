@@ -1,31 +1,31 @@
-package com.ronitech.employee_platform.service;
+// package com.ronitech.employee_platform.service;
 
-import com.ronitech.employee_platform.dto.EmployeeRequest;
-import com.ronitech.employee_platform.dto.EmployeeResponse;
-import com.ronitech.employee_platform.entity.Employee;
+// import com.ronitech.employee_platform.dto.EmployeeRequest;
+// import com.ronitech.employee_platform.dto.EmployeeResponse;
+// import com.ronitech.employee_platform.entity.Employee;
 
-public class EmployeeMapper {
+// public class EmployeeMapper {
 
-    public static EmployeeResponse toResponse(Employee employee) {
+//     public static EmployeeResponse toResponse(Employee employee) {
 
-        return new EmployeeResponse(
-                employee.getId(),
-                employee.getFirstName(),
-                employee.getLastName(),
-                employee.getEmail()
-        );
+//         return new EmployeeResponse(
+//                 employee.getId(),
+//                 employee.getFirstName(),
+//                 employee.getLastName(),
+//                 employee.getEmail()
+//         );
 
-    }
+//     }
 
-    public static Employee toEntity(EmployeeRequest request) {
+//     public static Employee toEntity(EmployeeRequest request) {
 
-        Employee employee = new Employee();
+//         Employee employee = new Employee();
 
-        employee.setFirstName(request.firstName());
-        employee.setLastName(request.lastName());
-        employee.setEmail(request.email());
+//         employee.setFirstName(request.firstName());
+//         employee.setLastName(request.lastName());
+//         employee.setEmail(request.email());
 
-        return employee;
-    }
+//         return employee;
+//     }
 
-}
+// }
