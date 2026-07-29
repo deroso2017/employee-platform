@@ -6,9 +6,10 @@ import com.ronitech.employee_platform.service.EmployeeService;
 
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 
 @RestController
 @RequestMapping("/api/employees")
@@ -21,9 +22,9 @@ public class EmployeeController {
     }
 
     @GetMapping
-    public List<EmployeeResponse> getEmployees() {
+    public Page<EmployeeResponse> getEmployees(Pageable pageable) {
 
-        return service.findAll();
+        return service.findAll(pageable);
     }
 
     @GetMapping("/{id}")
@@ -57,6 +58,17 @@ public class EmployeeController {
             @PathVariable Long id) {
 
         service.delete(id);
+
+    }
+
+    @GetMapping("/search")
+    public Page<EmployeeResponse> search(
+            @RequestParam String name,
+            Pageable pageable) {
+
+        return service.search(
+                name,
+                pageable);
 
     }
 

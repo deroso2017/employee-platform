@@ -9,6 +9,8 @@ import com.ronitech.employee_platform.repository.EmployeeRepository;
 
 import jakarta.transaction.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -30,12 +32,11 @@ public class EmployeeService {
     // return repository.findAll();
     // }
 
-    public List<EmployeeResponse> findAll() {
+    public Page<EmployeeResponse> findAll(
+            Pageable pageable) {
 
-        return repository.findAll()
-                .stream()
-                .map(mapper::toResponse)
-                .toList();
+        return repository.findAll(pageable)
+                .map(mapper::toResponse);
 
     }
 
@@ -64,8 +65,7 @@ public class EmployeeService {
             EmployeeRequest request) {
 
         Employee employee = repository.findById(id)
-                .orElseThrow(() ->
-                        new EmployeeNotFoundException(id));
+                .orElseThrow(() -> new EmployeeNotFoundException(id));
 
         employee.setFirstName(request.firstName());
         employee.setLastName(request.lastName());
@@ -75,15 +75,25 @@ public class EmployeeService {
 
     }
 
-
     public void delete(
             Long id) {
 
         Employee employee = repository.findById(id)
-                .orElseThrow(() ->
-                        new EmployeeNotFoundException(id));
+                .orElseThrow(() -> new EmployeeNotFoundException(id));
 
         repository.delete(employee);
+
+    }
+
+    public Page<EmployeeResponse> search(
+            String name,
+            Pageable pageable) {
+
+        return repository
+                .findByFirstNameContainingIgnoreCase(
+                        name,
+                        pageable)
+                .map(mapper::toResponse);
 
     }
 
