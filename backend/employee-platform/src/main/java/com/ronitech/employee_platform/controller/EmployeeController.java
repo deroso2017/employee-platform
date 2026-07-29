@@ -26,12 +26,37 @@ public class EmployeeController {
         return service.findAll();
     }
 
+    @GetMapping("/{id}")
+    public EmployeeResponse getEmployee(
+            @PathVariable Long id) {
+
+        return service.findById(id);
+
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public EmployeeResponse createEmployee(
             @Valid @RequestBody EmployeeRequest request) {
 
         return service.create(request);
+
+    }
+
+    @PutMapping("/{id}")
+    public EmployeeResponse updateEmployee(
+            @PathVariable Long id,
+            @Valid @RequestBody EmployeeRequest request) {
+
+        return service.update(id, request);
+
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteEmployee(
+            @PathVariable Long id) {
+
+        service.delete(id);
 
     }
 

@@ -3,8 +3,12 @@ package com.ronitech.employee_platform.service;
 import com.ronitech.employee_platform.dto.EmployeeRequest;
 import com.ronitech.employee_platform.dto.EmployeeResponse;
 import com.ronitech.employee_platform.entity.Employee;
+import com.ronitech.employee_platform.exception.EmployeeNotFoundException;
 import com.ronitech.employee_platform.mapper.EmployeeMapper;
 import com.ronitech.employee_platform.repository.EmployeeRepository;
+
+import jakarta.transaction.Transactional;
+
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -35,6 +39,15 @@ public class EmployeeService {
 
     }
 
+    public EmployeeResponse findById(Long id) {
+
+        Employee employee = repository.findById(id)
+                .orElseThrow(() -> new EmployeeNotFoundException(id));
+
+        return mapper.toResponse(employee);
+
+    }
+
     public EmployeeResponse create(EmployeeRequest request) {
 
         Employee employee = mapper.toEntity(request);
@@ -44,4 +57,34 @@ public class EmployeeService {
         return mapper.toResponse(savedEmployee);
 
     }
+
+    @Transactional
+    public EmployeeResponse update(
+            Long id,
+            EmployeeRequest request) {
+
+        Employee employee = repository.findById(id)
+                .orElseThrow(() ->
+                        new EmployeeNotFoundException(id));
+
+        employee.setFirstName(request.firstName());
+        employee.setLastName(request.lastName());
+        employee.setEmail(request.email());
+
+        return mapper.toResponse(employee);
+
+    }
+
+
+    public void delete(
+            Long id) {
+
+        Employee employee = repository.findById(id)
+                .orElseThrow(() ->
+                        new EmployeeNotFoundException(id));
+
+        repository.delete(employee);
+
+    }
+
 }
