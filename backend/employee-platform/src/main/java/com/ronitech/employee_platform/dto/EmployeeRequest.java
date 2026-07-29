@@ -2,6 +2,7 @@ package com.ronitech.employee_platform.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import java.math.BigDecimal;
 
 public record EmployeeRequest(
 
@@ -13,6 +14,10 @@ public record EmployeeRequest(
 
         @Email(message = "Invalid email")
         @NotBlank(message = "Email is required")
-        String email
+        String email,
+
+        String position,
+        BigDecimal salary,
+        Long departmentId
 
 ) {}

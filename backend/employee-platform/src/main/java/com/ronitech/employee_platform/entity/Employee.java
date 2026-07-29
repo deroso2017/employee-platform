@@ -2,6 +2,7 @@ package com.ronitech.employee_platform.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "employees")
@@ -13,8 +14,12 @@ public class Employee {
     private Long id;
 
     private String firstName;
-
     private String lastName;
-
     private String email;
+    private String position;
+    private BigDecimal salary;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "department_id")
+    private Department department;
 }
