@@ -2,9 +2,11 @@ package com.ronitech.employee_platform.service;
 
 import com.ronitech.employee_platform.dto.EmployeeRequest;
 import com.ronitech.employee_platform.dto.EmployeeResponse;
+import com.ronitech.employee_platform.entity.Department;
 import com.ronitech.employee_platform.entity.Employee;
 import com.ronitech.employee_platform.exception.EmployeeNotFoundException;
 import com.ronitech.employee_platform.mapper.EmployeeMapper;
+import com.ronitech.employee_platform.repository.DepartmentRepository;
 import com.ronitech.employee_platform.repository.EmployeeRepository;
 
 import jakarta.transaction.Transactional;
@@ -18,11 +20,14 @@ import java.util.List;
 @Service
 public class EmployeeService {
 
-    private final EmployeeRepository repository;
+    private final EmployeeRepository employeeRepository;
+    private final DepartmentRepository departmentRepository;
     private final EmployeeMapper mapper;
 
-    public EmployeeService(EmployeeRepository repository, EmployeeMapper mapper) {
-        this.repository = repository;
+    public EmployeeService(EmployeeRepository employeeRepository, DepartmentRepository departmentRepository,
+            EmployeeMapper mapper) {
+        this.employeeRepository = employeeRepository;
+        this.departmentRepository = departmentRepository;
         this.mapper = mapper;
     }
 
@@ -35,14 +40,14 @@ public class EmployeeService {
     public Page<EmployeeResponse> findAll(
             Pageable pageable) {
 
-        return repository.findAll(pageable)
+        return employeeRepository.findAll(pageable)
                 .map(mapper::toResponse);
 
     }
 
     public EmployeeResponse findById(Long id) {
 
-        Employee employee = repository.findById(id)
+        Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new EmployeeNotFoundException(id));
 
         return mapper.toResponse(employee);
@@ -53,7 +58,7 @@ public class EmployeeService {
 
         Employee employee = mapper.toEntity(request);
 
-        Employee savedEmployee = repository.save(employee);
+        Employee savedEmployee = employeeRepository.save(employee);
 
         return mapper.toResponse(savedEmployee);
 
@@ -64,7 +69,7 @@ public class EmployeeService {
             Long id,
             EmployeeRequest request) {
 
-        Employee employee = repository.findById(id)
+        Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new EmployeeNotFoundException(id));
 
         employee.setFirstName(request.firstName());
@@ -75,26 +80,41 @@ public class EmployeeService {
 
     }
 
-    public void delete(
-            Long id) {
+    public void delete(Long id) {
 
-        Employee employee = repository.findById(id)
+        Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new EmployeeNotFoundException(id));
 
-        repository.delete(employee);
+        employeeRepository.delete(employee);
 
     }
 
-    public Page<EmployeeResponse> search(
-            String name,
-            Pageable pageable) {
+    public Page<EmployeeResponse> search(String name, Pageable pageable) {
 
-        return repository
+        return employeeRepository
                 .findByFirstNameContainingIgnoreCase(
                         name,
                         pageable)
                 .map(mapper::toResponse);
 
+    }
+
+    public EmployeeResponse assignDepartment(
+            Long employeeId,
+            Long departmentId) {
+
+        Employee employee = employeeRepository
+                .findById(employeeId)
+                .orElseThrow(() -> new EmployeeNotFoundException(employeeId));
+
+        Department department = departmentRepository
+                .findById(departmentId)
+                .orElseThrow();
+
+        employee.setDepartment(department);
+
+        return mapper.toResponse(
+                employeeRepository.save(employee));
     }
 
 }

@@ -72,4 +72,15 @@ public class EmployeeController {
 
     }
 
+    @PutMapping("/{employeeId}/department/{departmentId}")
+    public EmployeeResponse assignDepartment(
+            @PathVariable Long employeeId,
+            @PathVariable Long departmentId) {
+
+        return service.assignDepartment(
+                employeeId,
+                departmentId);
+
+    }
+
 }
