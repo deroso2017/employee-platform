@@ -1,5 +1,7 @@
 package com.ronitech.employee_platform.controller;
 
+import com.ronitech.employee_platform.dto.LoginRequest;
+import com.ronitech.employee_platform.dto.LoginResponse;
 import com.ronitech.employee_platform.dto.RegisterRequest;
 import com.ronitech.employee_platform.dto.RegisterResponse;
 import com.ronitech.employee_platform.service.AuthService;
@@ -20,6 +22,12 @@ public class AuthController {
 
         return service.register(request);
 
+    }
+
+    @PostMapping("/login")
+    public LoginResponse login(
+            @Valid @RequestBody LoginRequest request) {
+        return service.login(request);
     }
 
 }
