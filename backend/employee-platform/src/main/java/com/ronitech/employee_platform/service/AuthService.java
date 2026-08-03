@@ -25,6 +25,7 @@ public class AuthService {
     private final UserMapper mapper;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
 
     public RegisterResponse register(RegisterRequest request) {
 
@@ -53,7 +54,13 @@ public class AuthService {
 
                 ));
 
-        return new LoginResponse("Login successful");
+        User user = repository
+                .findByEmail(request.email())
+                .orElseThrow();
+
+        String token = jwtService.generateToken(user);
+
+        return new LoginResponse(token);
 
     }
 
