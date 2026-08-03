@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/employees")
@@ -35,6 +36,7 @@ public class EmployeeController {
 
     }
 
+    @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER')")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public EmployeeResponse createEmployee(
@@ -44,6 +46,7 @@ public class EmployeeController {
 
     }
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PutMapping("/{id}")
     public EmployeeResponse updateEmployee(
             @PathVariable Long id,
@@ -53,6 +56,7 @@ public class EmployeeController {
 
     }
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @DeleteMapping("/{id}")
     public void deleteEmployee(
             @PathVariable Long id) {
