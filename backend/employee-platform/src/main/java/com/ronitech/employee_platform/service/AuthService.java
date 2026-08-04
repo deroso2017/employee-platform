@@ -2,8 +2,10 @@ package com.ronitech.employee_platform.service;
 
 import com.ronitech.employee_platform.dto.LoginRequest;
 import com.ronitech.employee_platform.dto.LoginResponse;
+import com.ronitech.employee_platform.dto.RefreshRequest;
 import com.ronitech.employee_platform.dto.RegisterRequest;
 import com.ronitech.employee_platform.dto.RegisterResponse;
+import com.ronitech.employee_platform.entity.RefreshToken;
 import com.ronitech.employee_platform.entity.User;
 import com.ronitech.employee_platform.exception.EmailAlreadyExistsException;
 import com.ronitech.employee_platform.mapper.UserMapper;
@@ -67,6 +69,25 @@ public class AuthService {
         String refreshToken = refreshTokenService.create(user).getToken();
 
         return new LoginResponse(accessToken, refreshToken);
+
+    }
+
+    public LoginResponse refresh(RefreshRequest request) {
+
+        RefreshToken refreshToken = refreshTokenService.validate(
+                request.refreshToken());
+
+        User user = refreshToken.getUser();
+
+        String accessToken = jwtService.generateAccessToken(user);
+
+        RefreshToken newRefreshToken = refreshTokenService.rotate(refreshToken);
+
+        return new LoginResponse(
+                accessToken,
+                newRefreshToken.getToken()
+
+        );
 
     }
 

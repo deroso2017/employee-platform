@@ -2,6 +2,7 @@ package com.ronitech.employee_platform.controller;
 
 import com.ronitech.employee_platform.dto.LoginRequest;
 import com.ronitech.employee_platform.dto.LoginResponse;
+import com.ronitech.employee_platform.dto.RefreshRequest;
 import com.ronitech.employee_platform.dto.RegisterRequest;
 import com.ronitech.employee_platform.dto.RegisterResponse;
 import com.ronitech.employee_platform.entity.User;
@@ -38,6 +39,15 @@ public class AuthController {
     public void logout(
             @Valid @RequestBody LoginRequest request) {
         // Implementation for logout
+    }
+
+    @PostMapping("/refresh")
+    public LoginResponse refresh(
+            @Valid @RequestBody RefreshRequest request
+
+    ) {
+        return service.refresh(request);
+
     }
 
     @GetMapping("/me")
