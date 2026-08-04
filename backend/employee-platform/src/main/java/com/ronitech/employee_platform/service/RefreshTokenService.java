@@ -1,6 +1,7 @@
 package com.ronitech.employee_platform.service;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -10,6 +11,7 @@ import com.ronitech.employee_platform.entity.RefreshToken;
 import com.ronitech.employee_platform.entity.User;
 import com.ronitech.employee_platform.repository.RefreshTokenRepository;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -62,11 +64,22 @@ public class RefreshTokenService {
         return create(oldToken.getUser());
     }
 
-    public void revoke(RefreshToken token) {
+    public void revoke(String token) {
 
-        token.setRevoked(true);
+        RefreshToken refreshToken = validate(token);
 
-        repository.save(token);
+        refreshToken.setRevoked(true);
+
+        repository.save(refreshToken);
+
+    }
+
+    @Transactional
+    public void revokeAll(User user) {
+        List<RefreshToken> tokens = repository.findAllByUser(user);
+
+        tokens.forEach(token -> token.setRevoked(true));
+
     }
 
 }

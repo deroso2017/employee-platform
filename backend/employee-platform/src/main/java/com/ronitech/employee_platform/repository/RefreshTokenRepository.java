@@ -1,5 +1,6 @@
 package com.ronitech.employee_platform.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,6 +13,6 @@ public interface RefreshTokenRepository
 
     Optional<RefreshToken> findByToken(String token);
 
-    Optional<RefreshToken> findByUser(User user);
+    List<RefreshToken> findAllByUser(User user);
 
 }

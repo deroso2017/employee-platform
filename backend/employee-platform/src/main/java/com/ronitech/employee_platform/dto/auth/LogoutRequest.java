@@ -1,8 +1,8 @@
-package com.ronitech.employee_platform.dto;
+package com.ronitech.employee_platform.dto.auth;
 
 import jakarta.validation.constraints.NotBlank;
 
-public record RefreshRequest(
+public record LogoutRequest(
 
         @NotBlank String refreshToken
 

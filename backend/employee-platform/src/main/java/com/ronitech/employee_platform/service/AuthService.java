@@ -1,10 +1,11 @@
 package com.ronitech.employee_platform.service;
 
-import com.ronitech.employee_platform.dto.LoginRequest;
-import com.ronitech.employee_platform.dto.LoginResponse;
-import com.ronitech.employee_platform.dto.RefreshRequest;
 import com.ronitech.employee_platform.dto.RegisterRequest;
 import com.ronitech.employee_platform.dto.RegisterResponse;
+import com.ronitech.employee_platform.dto.auth.LoginRequest;
+import com.ronitech.employee_platform.dto.auth.LoginResponse;
+import com.ronitech.employee_platform.dto.auth.LogoutRequest;
+import com.ronitech.employee_platform.dto.auth.RefreshRequest;
 import com.ronitech.employee_platform.entity.RefreshToken;
 import com.ronitech.employee_platform.entity.User;
 import com.ronitech.employee_platform.exception.EmailAlreadyExistsException;
@@ -26,74 +27,82 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class AuthService {
 
-    private final UserRepository repository;
-    private final RefreshTokenRepository refreshTokenRepository;
-    private final UserMapper mapper;
-    private final PasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;
-    private final JwtService jwtService;
-    private final RefreshTokenService refreshTokenService;
+        private final UserRepository repository;
+        private final RefreshTokenRepository refreshTokenRepository;
+        private final UserMapper mapper;
+        private final PasswordEncoder passwordEncoder;
+        private final AuthenticationManager authenticationManager;
+        private final JwtService jwtService;
+        private final RefreshTokenService refreshTokenService;
 
-    public RegisterResponse register(RegisterRequest request) {
+        public RegisterResponse register(RegisterRequest request) {
 
-        if (repository.findByEmail(request.email()).isPresent()) {
-            throw new EmailAlreadyExistsException("Email already exists");
+                if (repository.findByEmail(request.email()).isPresent()) {
+                        throw new EmailAlreadyExistsException("Email already exists");
+                }
+
+                User user = mapper.toEntity(request);
+
+                user.setPassword(
+                                passwordEncoder.encode(request.password()));
+
+                return mapper.toResponse(
+                                repository.save(user));
         }
 
-        User user = mapper.toEntity(request);
+        public LoginResponse login(LoginRequest request) {
 
-        user.setPassword(
-                passwordEncoder.encode(request.password()));
+                authenticationManager.authenticate(
 
-        return mapper.toResponse(
-                repository.save(user));
-    }
+                                new UsernamePasswordAuthenticationToken(
 
-    public LoginResponse login(LoginRequest request) {
+                                                request.email(),
 
-        authenticationManager.authenticate(
+                                                request.password()
 
-                new UsernamePasswordAuthenticationToken(
+                                ));
 
-                        request.email(),
+                User user = repository
+                                .findByEmail(request.email())
+                                .orElseThrow();
 
-                        request.password()
+                String accessToken = jwtService.generateAccessToken(user);
+                String refreshToken = refreshTokenService.create(user).getToken();
 
-                ));
+                return new LoginResponse(accessToken, refreshToken);
 
-        User user = repository
-                .findByEmail(request.email())
-                .orElseThrow();
+        }
 
-        String accessToken = jwtService.generateAccessToken(user);
-        String refreshToken = refreshTokenService.create(user).getToken();
+        public LoginResponse refresh(RefreshRequest request) {
 
-        return new LoginResponse(accessToken, refreshToken);
+                RefreshToken refreshToken = refreshTokenService.validate(
+                                request.refreshToken());
 
-    }
+                User user = refreshToken.getUser();
 
-    public LoginResponse refresh(RefreshRequest request) {
+                String accessToken = jwtService.generateAccessToken(user);
 
-        RefreshToken refreshToken = refreshTokenService.validate(
-                request.refreshToken());
+                RefreshToken newRefreshToken = refreshTokenService.rotate(refreshToken);
 
-        User user = refreshToken.getUser();
+                return new LoginResponse(
+                                accessToken,
+                                newRefreshToken.getToken()
 
-        String accessToken = jwtService.generateAccessToken(user);
+                );
 
-        RefreshToken newRefreshToken = refreshTokenService.rotate(refreshToken);
+        }
 
-        return new LoginResponse(
-                accessToken,
-                newRefreshToken.getToken()
+        public void logout(LogoutRequest request) {
 
-        );
+                refreshTokenService.revoke(
+                                request.refreshToken());
 
-    }
+        }
 
-    public void logout(User user) {
-        // implement logout logic, e.g., revoke the refresh token
-        refreshTokenRepository.findByUser(user).ifPresent(refreshTokenService::revoke);
-    }
+        public void logoutAll(User user) {
+
+                refreshTokenService.revokeAll(user);
+
+        }
 
 }
