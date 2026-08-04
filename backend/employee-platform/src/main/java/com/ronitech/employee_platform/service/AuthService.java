@@ -7,8 +7,11 @@ import com.ronitech.employee_platform.dto.RegisterResponse;
 import com.ronitech.employee_platform.entity.User;
 import com.ronitech.employee_platform.exception.EmailAlreadyExistsException;
 import com.ronitech.employee_platform.mapper.UserMapper;
+import com.ronitech.employee_platform.repository.RefreshTokenRepository;
 import com.ronitech.employee_platform.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+
+import java.util.UUID;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -22,10 +25,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
     private final UserRepository repository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final UserMapper mapper;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
 
     public RegisterResponse register(RegisterRequest request) {
 
@@ -58,10 +63,16 @@ public class AuthService {
                 .findByEmail(request.email())
                 .orElseThrow();
 
-        String token = jwtService.generateToken(user);
+        String accessToken = jwtService.generateAccessToken(user);
+        String refreshToken = refreshTokenService.create(user).getToken();
 
-        return new LoginResponse(token);
+        return new LoginResponse(accessToken, refreshToken);
 
+    }
+
+    public void logout(User user) {
+        // implement logout logic, e.g., revoke the refresh token
+        refreshTokenRepository.findByUser(user).ifPresent(refreshTokenService::revoke);
     }
 
 }

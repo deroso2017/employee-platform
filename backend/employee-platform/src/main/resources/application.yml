@@ -20,7 +20,10 @@ spring:
    
 jwt:
     secret: 6c808e9d-1bd7-4768-a1e0-ddb09e6cf147
-    expiration: 3600000
-    
+    expiration: 900000
+
+refresh:
+  expiration: 2592000000
+
 server:
   port: 8080

@@ -33,7 +33,7 @@ public class JwtService {
 
     }
 
-    public String generateToken(User user) {
+    public String generateAccessToken(User user) {
 
         return Jwts.builder()
                 .subject(user.getEmail())

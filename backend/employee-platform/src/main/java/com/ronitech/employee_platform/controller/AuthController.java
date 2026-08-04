@@ -34,6 +34,12 @@ public class AuthController {
         return service.login(request);
     }
 
+    @PostMapping("/logout")
+    public void logout(
+            @Valid @RequestBody LoginRequest request) {
+        // Implementation for logout
+    }
+
     @GetMapping("/me")
     public String me(Authentication authentication) {
 
