@@ -16,29 +16,33 @@ import lombok.RequiredArgsConstructor;
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+        private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        @Bean
+        SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-        // http
-        // .csrf(csrf -> csrf.disable())
-        // .authorizeHttpRequests(auth -> auth
-        // .anyRequest().permitAll());
+                // http
+                // .csrf(csrf -> csrf.disable())
+                // .authorizeHttpRequests(auth -> auth
+                // .anyRequest().permitAll());
 
-        http
-                .csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .anyRequest().authenticated());
+                http
+                                .csrf(csrf -> csrf.disable())
+                                .authorizeHttpRequests(auth -> auth
+                                                .requestMatchers("/api/auth/**",
+                                                                "/swagger-ui/**",
+                                                                "/swagger-ui.html",
+                                                                "/v3/api-docs/**")
+                                                .permitAll()
+                                                .anyRequest().authenticated());
 
-        http.addFilterBefore(
-                jwtAuthenticationFilter,
-                UsernamePasswordAuthenticationFilter.class);
+                http.addFilterBefore(
+                                jwtAuthenticationFilter,
+                                UsernamePasswordAuthenticationFilter.class);
 
-        http.sessionManagement(session -> session.sessionCreationPolicy(
-                SessionCreationPolicy.STATELESS));
+                http.sessionManagement(session -> session.sessionCreationPolicy(
+                                SessionCreationPolicy.STATELESS));
 
-        return http.build();
-    }
+                return http.build();
+        }
 }
