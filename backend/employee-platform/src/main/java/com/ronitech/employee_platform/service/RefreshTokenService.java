@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.ronitech.employee_platform.entity.RefreshToken;
 import com.ronitech.employee_platform.entity.User;
+import com.ronitech.employee_platform.exception.InvalidRefreshTokenException;
 import com.ronitech.employee_platform.repository.RefreshTokenRepository;
 
 import jakarta.transaction.Transactional;
@@ -41,14 +42,14 @@ public class RefreshTokenService {
 
         RefreshToken refreshToken = repository
                 .findByToken(token)
-                .orElseThrow(() -> new RuntimeException("Invalid refresh token"));
+                .orElseThrow(() -> new InvalidRefreshTokenException("Invalid refresh token"));
 
         if (refreshToken.isRevoked()) {
-            throw new RuntimeException("Refresh token revoked");
+            throw new InvalidRefreshTokenException("Refresh token revoked");
         }
 
         if (refreshToken.getExpiresAt().isBefore(Instant.now())) {
-            throw new RuntimeException("Refresh token expired");
+            throw new InvalidRefreshTokenException("Refresh token expired");
         }
 
         return refreshToken;
