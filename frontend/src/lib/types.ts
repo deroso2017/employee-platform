@@ -11,6 +11,15 @@ export interface LoginResponse {
   refreshToken: string;
 }
 
+export interface RefreshRequest {
+  refreshToken: string;
+}
+
+export interface RefreshResponse {
+  accessToken: string;
+  refreshToken: string;
+}
+
 export interface Employee {
   id: number;
   firstName: string;
