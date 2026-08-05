@@ -42,6 +42,19 @@ public class GlobalExceptionHandler {
 
     }
 
+    @ExceptionHandler(DepartmentNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Map<String, String> handleNotFound(
+            DepartmentNotFoundException ex) {
+
+        Map<String, String> error = new HashMap<>();
+
+        error.put("message", ex.getMessage());
+
+        return error;
+
+    }
+
     @ExceptionHandler(EmailAlreadyExistsException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public Map<String, String> handleEmailAlreadyExists(
