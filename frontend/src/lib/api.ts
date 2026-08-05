@@ -3,7 +3,7 @@ import { clearTokens, getAccessToken, getRefreshToken, setTokens } from "./auth"
 import type { Department, Employee, LoginResponse, Page, User } from "./types";
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080",
+  baseURL: "",
 });
 
 api.interceptors.request.use((config) => {
@@ -22,7 +22,7 @@ api.interceptors.response.use(
       if (refreshToken) {
         try {
           const { data } = await axios.post<LoginResponse>(
-            `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080"}/api/auth/refresh`,
+            "/api/auth/refresh",
             { refreshToken }
           );
           setTokens(data.accessToken, data.refreshToken);
