@@ -1,5 +1,10 @@
 import axios from "axios";
-import { clearTokens, getAccessToken, getRefreshToken, setTokens } from "./auth";
+import {
+  clearTokens,
+  getAccessToken,
+  getRefreshToken,
+  setTokens,
+} from "./auth";
 import type { Department, Employee, LoginResponse, Page, User } from "./types";
 
 const api = axios.create({
@@ -12,6 +17,8 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+let refreshPromise: Promise<string> | null = null;
+
 api.interceptors.response.use(
   (res) => res,
   async (error) => {
@@ -21,12 +28,19 @@ api.interceptors.response.use(
       const refreshToken = getRefreshToken();
       if (refreshToken) {
         try {
-          const { data } = await axios.post<LoginResponse>(
-            "/api/auth/refresh",
-            { refreshToken }
-          );
-          setTokens(data.accessToken, data.refreshToken);
-          original.headers.Authorization = `Bearer ${data.accessToken}`;
+          if (!refreshPromise) {
+            refreshPromise = axios
+              .post<LoginResponse>("/api/auth/refresh", { refreshToken })
+              .then(({ data }) => {
+                setTokens(data.accessToken, data.refreshToken);
+                return data.accessToken;
+              })
+              .finally(() => {
+                refreshPromise = null;
+              });
+          }
+          const accessToken = await refreshPromise;
+          original.headers.Authorization = `Bearer ${accessToken}`;
           return api(original);
         } catch {
           clearTokens();
@@ -38,7 +52,7 @@ api.interceptors.response.use(
       }
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 // Auth
@@ -50,6 +64,8 @@ export const authApi = {
   logout: (refreshToken: string) =>
     api.post("/api/auth/logout", { refreshToken }),
   profile: () => api.get<User>("/api/auth/profile"),
+  refreshToken: (refreshToken: string) =>
+    api.post<LoginResponse>("/api/auth/refresh", { refreshToken }),
 };
 
 // Employees
@@ -61,17 +77,20 @@ export const employeeApi = {
     api.get<Page<Employee>>(`/api/employees/search?name=${name}&page=${page}`),
   create: (data: { firstName: string; lastName: string; email: string }) =>
     api.post<Employee>("/api/employees", data),
-  update: (id: number, data: { firstName: string; lastName: string; email: string }) =>
-    api.put<Employee>(`/api/employees/${id}`, data),
+  update: (
+    id: number,
+    data: { firstName: string; lastName: string; email: string },
+  ) => api.put<Employee>(`/api/employees/${id}`, data),
   delete: (id: number) => api.delete(`/api/employees/${id}`),
   assignDepartment: (employeeId: number, departmentId: number) =>
-    api.put<Employee>(`/api/employees/${employeeId}/department/${departmentId}`),
+    api.put<Employee>(
+      `/api/employees/${employeeId}/department/${departmentId}`,
+    ),
 };
 
 // Departments
 export const departmentApi = {
-  create: (name: string) =>
-    api.post<Department>("/api/departments", { name }),
+  create: (name: string) => api.post<Department>("/api/departments", { name }),
 };
 
 export default api;
