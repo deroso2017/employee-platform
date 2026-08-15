@@ -24,6 +24,7 @@ public class Employee {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "department_id")
-    // @JsonIgnore
+    // @JsonIgnore // Solution for the infinite recursion problem when serializing
+    // to JSON
     private Department department;
 }

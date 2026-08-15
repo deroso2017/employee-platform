@@ -38,6 +38,16 @@ public class DepartmentService {
 
     }
 
+    public DepartmentResponse update(Long id, DepartmentRequest request) {
+
+        Department department = repository.findById(id)
+                .orElseThrow(() -> new DepartmentNotFoundException(id));
+
+        department.setName(request.name());
+
+        return mapper.toResponse(department);
+    }
+
     public void delete(Long id) {
 
         Department department = repository.findById(id)

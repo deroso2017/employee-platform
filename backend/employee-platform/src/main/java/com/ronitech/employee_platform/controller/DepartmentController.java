@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,6 +26,7 @@ public class DepartmentController {
 
     private final DepartmentService service;
 
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER')")
     @PostMapping
     public DepartmentResponse create(
             @Valid @RequestBody DepartmentRequest request) {
@@ -43,6 +45,14 @@ public class DepartmentController {
 
         service.delete(id);
 
+    }
+
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER')")
+    @PutMapping("/{id}")
+    public DepartmentResponse update(
+            @PathVariable Long id,
+            @Valid @RequestBody DepartmentRequest request) {
+        return service.update(id, request);
     }
 
 }
