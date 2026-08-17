@@ -90,7 +90,10 @@ export const employeeApi = {
 
 // Departments
 export const departmentApi = {
+  getAll: () => api.get<Department[]>("/api/departments"),
   create: (name: string) => api.post<Department>("/api/departments", { name }),
+  update: (id: number, name: string) => api.put<Department>(`/api/departments/${id}`, { name }),
+  delete: (id: number) => api.delete(`/api/departments/${id}`),
 };
 
 export default api;
