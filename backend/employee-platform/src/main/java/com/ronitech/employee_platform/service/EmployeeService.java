@@ -13,108 +13,140 @@ import jakarta.transaction.Transactional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.List;
 
 @Service
 public class EmployeeService {
 
-    private final EmployeeRepository employeeRepository;
-    private final DepartmentRepository departmentRepository;
-    private final EmployeeMapper mapper;
+        private final EmployeeRepository employeeRepository;
+        private final DepartmentRepository departmentRepository;
+        private final EmployeeMapper mapper;
+        private final RedisTemplate<String, Object> redisTemplate;
 
-    public EmployeeService(EmployeeRepository employeeRepository, DepartmentRepository departmentRepository,
-            EmployeeMapper mapper) {
-        this.employeeRepository = employeeRepository;
-        this.departmentRepository = departmentRepository;
-        this.mapper = mapper;
-    }
+        public EmployeeService(EmployeeRepository employeeRepository, DepartmentRepository departmentRepository,
+                        EmployeeMapper mapper, RedisTemplate<String, Object> redisTemplate) {
+                this.employeeRepository = employeeRepository;
+                this.departmentRepository = departmentRepository;
+                this.mapper = mapper;
+                this.redisTemplate = redisTemplate;
+        }
 
-    // Old approach:
-    // This returns the database Entity directly to the Controller.
-    // public List<Employee> findAll() {
-    // return repository.findAll();
-    // }
+        private String employeeCacheKey(Long id) {
+                return "employee:" + id;
+        }
 
-    public Page<EmployeeResponse> findAll(
-            Pageable pageable) {
+        // Old approach:
+        // This returns the database Entity directly to the Controller.
+        // public List<Employee> findAll() {
+        // return repository.findAll();
+        // }
 
-        return employeeRepository.findAll(pageable)
-                .map(mapper::toResponse);
+        public Page<EmployeeResponse> findAll(
+                        Pageable pageable) {
 
-    }
+                return employeeRepository.findAll(pageable)
+                                .map(mapper::toResponse);
 
-    public EmployeeResponse findById(Long id) {
+        }
 
-        Employee employee = employeeRepository.findById(id)
-                .orElseThrow(() -> new EmployeeNotFoundException(id));
+        public EmployeeResponse findById(Long id) {
 
-        return mapper.toResponse(employee);
+                String key = employeeCacheKey(id);
 
-    }
+                EmployeeResponse cached = (EmployeeResponse) redisTemplate
+                                .opsForValue()
+                                .get(key);
 
-    public EmployeeResponse create(EmployeeRequest request) {
+                if (cached != null) {
+                        return cached;
+                }
 
-        Employee employee = mapper.toEntity(request);
+                Employee employee = employeeRepository.findById(id)
+                                .orElseThrow(() -> new EmployeeNotFoundException(id));
 
-        Employee savedEmployee = employeeRepository.save(employee);
+                EmployeeResponse response = mapper.toResponse(employee);
 
-        return mapper.toResponse(savedEmployee);
+                redisTemplate
+                                .opsForValue()
+                                .set(
+                                                key,
+                                                response,
+                                                Duration.ofMinutes(10));
 
-    }
+                return response;
+        }
 
-    @Transactional
-    public EmployeeResponse update(
-            Long id,
-            EmployeeRequest request) {
+        public EmployeeResponse create(EmployeeRequest request) {
 
-        Employee employee = employeeRepository.findById(id)
-                .orElseThrow(() -> new EmployeeNotFoundException(id));
+                Employee employee = mapper.toEntity(request);
 
-        employee.setFirstName(request.firstName());
-        employee.setLastName(request.lastName());
-        employee.setEmail(request.email());
+                Employee savedEmployee = employeeRepository.save(employee);
 
-        return mapper.toResponse(employee);
+                return mapper.toResponse(savedEmployee);
 
-    }
+        }
 
-    public void delete(Long id) {
+        @Transactional
+        public EmployeeResponse update(
+                        Long id,
+                        EmployeeRequest request) {
 
-        Employee employee = employeeRepository.findById(id)
-                .orElseThrow(() -> new EmployeeNotFoundException(id));
+                Employee employee = employeeRepository.findById(id)
+                                .orElseThrow(() -> new EmployeeNotFoundException(id));
 
-        employeeRepository.delete(employee);
+                employee.setFirstName(request.firstName());
+                employee.setLastName(request.lastName());
+                employee.setEmail(request.email());
 
-    }
+                EmployeeResponse response = mapper.toResponse(employee);
 
-    public Page<EmployeeResponse> search(String name, Pageable pageable) {
+                redisTemplate.delete(employeeCacheKey(id));
 
-        return employeeRepository
-                .findByFirstNameContainingIgnoreCase(
-                        name,
-                        pageable)
-                .map(mapper::toResponse);
+                return response;
 
-    }
+        }
 
-    public EmployeeResponse assignDepartment(
-            Long employeeId,
-            Long departmentId) {
+        public void delete(Long id) {
 
-        Employee employee = employeeRepository
-                .findById(employeeId)
-                .orElseThrow(() -> new EmployeeNotFoundException(employeeId));
+                Employee employee = employeeRepository.findById(id)
+                                .orElseThrow(() -> new EmployeeNotFoundException(id));
 
-        Department department = departmentRepository
-                .findById(departmentId)
-                .orElseThrow();
+                employeeRepository.delete(employee);
 
-        employee.setDepartment(department);
+                redisTemplate.delete(employeeCacheKey(id));
 
-        return mapper.toResponse(
-                employeeRepository.save(employee));
-    }
+        }
+
+        public Page<EmployeeResponse> search(String name, Pageable pageable) {
+
+                return employeeRepository
+                                .findByFirstNameContainingIgnoreCase(
+                                                name,
+                                                pageable)
+                                .map(mapper::toResponse);
+
+        }
+
+        public EmployeeResponse assignDepartment(
+                        Long employeeId,
+                        Long departmentId) {
+
+                Employee employee = employeeRepository
+                                .findById(employeeId)
+                                .orElseThrow(() -> new EmployeeNotFoundException(employeeId));
+
+                Department department = departmentRepository
+                                .findById(departmentId)
+                                .orElseThrow();
+
+                employee.setDepartment(department);
+
+                return mapper.toResponse(
+                                employeeRepository.save(employee));
+        }
 
 }
