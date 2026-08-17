@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { employeeApi } from "@/lib/api";
-import type { Employee } from "@/lib/types";
+import { employeeApi, departmentApi } from "@/lib/api";
+import type { Employee, Department } from "@/lib/types";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +12,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Props {
   open: boolean;
@@ -21,24 +28,23 @@ interface Props {
 }
 
 export default function EmployeeFormDialog({ open, onClose, onSaved, employee }: Props) {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState(employee?.firstName ?? "");
+  const [lastName, setLastName] = useState(employee?.lastName ?? "");
+  const [email, setEmail] = useState(employee?.email ?? "");
+  const [departmentId, setDepartmentId] = useState(employee?.department?.id?.toString() ?? "");
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (employee) {
-      setFirstName(employee.firstName);
-      setLastName(employee.lastName);
-      setEmail(employee.email);
-    } else {
-      setFirstName("");
-      setLastName("");
-      setEmail("");
-    }
+    if (!open) return;
+    setFirstName(employee?.firstName ?? "");
+    setLastName(employee?.lastName ?? "");
+    setEmail(employee?.email ?? "");
+    setDepartmentId(employee?.department?.id?.toString() ?? "");
     setError("");
-  }, [employee, open]);
+    departmentApi.getAll().then(({ data }) => setDepartments(data));
+  }, [open]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -47,6 +53,9 @@ export default function EmployeeFormDialog({ open, onClose, onSaved, employee }:
     try {
       if (employee) {
         await employeeApi.update(employee.id, { firstName, lastName, email });
+        if (departmentId) {
+          await employeeApi.assignDepartment(employee.id, Number(departmentId));
+        }
       } else {
         await employeeApi.create({ firstName, lastName, email });
       }
@@ -78,6 +87,23 @@ export default function EmployeeFormDialog({ open, onClose, onSaved, employee }:
             <Label>Email</Label>
             <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
+          {employee && (
+            <div className="space-y-1">
+              <Label>Department</Label>
+              <Select value={departmentId} onValueChange={setDepartmentId}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a department" />
+                </SelectTrigger>
+                <SelectContent>
+                  {departments.map((d) => (
+                    <SelectItem key={d.id} value={d.id.toString()}>
+                      {d.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           {error && <p className="text-sm text-destructive">{error}</p>}
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
