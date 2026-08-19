@@ -4,6 +4,8 @@ import com.ronitech.employee_platform.dto.EmployeeRequest;
 import com.ronitech.employee_platform.dto.EmployeeResponse;
 import com.ronitech.employee_platform.entity.Department;
 import com.ronitech.employee_platform.entity.Employee;
+import com.ronitech.employee_platform.event.EmployeeCreatedEvent;
+import com.ronitech.employee_platform.event.EmployeeEventPublisher;
 import com.ronitech.employee_platform.exception.EmployeeNotFoundException;
 import com.ronitech.employee_platform.mapper.EmployeeMapper;
 import com.ronitech.employee_platform.repository.DepartmentRepository;
@@ -26,13 +28,16 @@ public class EmployeeService {
         private final DepartmentRepository departmentRepository;
         private final EmployeeMapper mapper;
         private final RedisTemplate<String, Object> redisTemplate;
+        private final EmployeeEventPublisher eventPublisher;
 
         public EmployeeService(EmployeeRepository employeeRepository, DepartmentRepository departmentRepository,
-                        EmployeeMapper mapper, RedisTemplate<String, Object> redisTemplate) {
+                        EmployeeMapper mapper, RedisTemplate<String, Object> redisTemplate,
+                        EmployeeEventPublisher eventPublisher) {
                 this.employeeRepository = employeeRepository;
                 this.departmentRepository = departmentRepository;
                 this.mapper = mapper;
                 this.redisTemplate = redisTemplate;
+                this.eventPublisher = eventPublisher;
         }
 
         private String employeeCacheKey(Long id) {
@@ -85,6 +90,14 @@ public class EmployeeService {
                 Employee employee = mapper.toEntity(request);
 
                 Employee savedEmployee = employeeRepository.save(employee);
+
+                EmployeeCreatedEvent event = new EmployeeCreatedEvent(
+                                savedEmployee.getId(),
+                                savedEmployee.getFirstName(),
+                                savedEmployee.getLastName(),
+                                savedEmployee.getEmail());
+
+                eventPublisher.publishEmployeeCreated(event);
 
                 return mapper.toResponse(savedEmployee);
 

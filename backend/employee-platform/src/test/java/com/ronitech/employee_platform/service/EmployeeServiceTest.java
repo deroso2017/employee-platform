@@ -20,6 +20,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import com.ronitech.employee_platform.dto.EmployeeRequest;
 import com.ronitech.employee_platform.dto.EmployeeResponse;
 import com.ronitech.employee_platform.entity.Employee;
+import com.ronitech.employee_platform.event.EmployeeEventPublisher;
 import com.ronitech.employee_platform.exception.EmployeeNotFoundException;
 import com.ronitech.employee_platform.mapper.EmployeeMapper;
 import com.ronitech.employee_platform.repository.DepartmentRepository;
@@ -39,6 +40,9 @@ class EmployeeServiceTest {
 
         @Mock
         private RedisTemplate<String, Object> redisTemplate;
+
+        @Mock
+        private EmployeeEventPublisher eventPublisher;
 
         @InjectMocks
         private EmployeeService service;
@@ -84,7 +88,8 @@ class EmployeeServiceTest {
                                 employeeRepository,
                                 departmentRepository,
                                 mapper,
-                                redisTemplate);
+                                redisTemplate,
+                                eventPublisher);
 
                 // when
                 EmployeeResponse result = service.create(request);
@@ -117,7 +122,8 @@ class EmployeeServiceTest {
                                 employeeRepository,
                                 departmentRepository,
                                 mapper,
-                                redisTemplate);
+                                redisTemplate,
+                                eventPublisher);
 
                 // when
                 service.delete(id);
@@ -140,7 +146,8 @@ class EmployeeServiceTest {
                                 employeeRepository,
                                 departmentRepository,
                                 mapper,
-                                redisTemplate);
+                                redisTemplate,
+                                eventPublisher);
 
                 assertThrows(
                                 EmployeeNotFoundException.class,
@@ -209,7 +216,8 @@ class EmployeeServiceTest {
                                 employeeRepository,
                                 departmentRepository,
                                 mapper,
-                                redisTemplate);
+                                redisTemplate,
+                                eventPublisher);
 
                 // when + then
                 assertThrows(
