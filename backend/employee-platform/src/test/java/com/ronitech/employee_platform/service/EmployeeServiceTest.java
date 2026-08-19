@@ -15,10 +15,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.core.RedisTemplate;
 
 import com.ronitech.employee_platform.dto.EmployeeRequest;
 import com.ronitech.employee_platform.dto.EmployeeResponse;
 import com.ronitech.employee_platform.entity.Employee;
+import com.ronitech.employee_platform.event.EmployeeEventPublisher;
 import com.ronitech.employee_platform.exception.EmployeeNotFoundException;
 import com.ronitech.employee_platform.mapper.EmployeeMapper;
 import com.ronitech.employee_platform.repository.DepartmentRepository;
@@ -27,211 +29,225 @@ import com.ronitech.employee_platform.repository.EmployeeRepository;
 @ExtendWith(MockitoExtension.class)
 class EmployeeServiceTest {
 
-    @Mock
-    private EmployeeRepository employeeRepository;
+        @Mock
+        private EmployeeRepository employeeRepository;
 
-    @Mock
-    private DepartmentRepository departmentRepository;
+        @Mock
+        private DepartmentRepository departmentRepository;
 
-    @Mock
-    private EmployeeMapper mapper;
+        @Mock
+        private EmployeeMapper mapper;
 
-    @InjectMocks
-    private EmployeeService service;
+        @Mock
+        private RedisTemplate<String, Object> redisTemplate;
 
-    @Test
-    void shouldCreateEmployee() {
+        @Mock
+        private EmployeeEventPublisher eventPublisher;
 
-        // given
-        EmployeeRequest request = new EmployeeRequest(
-                "John",
-                "Doe",
-                "john@test.com");
+        @InjectMocks
+        private EmployeeService service;
 
-        Employee employee = new Employee();
+        @Test
+        void shouldCreateEmployee() {
 
-        employee.setFirstName("John");
-        employee.setLastName("Doe");
-        employee.setEmail("john@test.com");
+                // given
+                EmployeeRequest request = new EmployeeRequest(
+                                "John",
+                                "Doe",
+                                "john@test.com");
 
-        Employee savedEmployee = new Employee();
+                Employee employee = new Employee();
 
-        savedEmployee.setId(1L);
-        savedEmployee.setFirstName("John");
-        savedEmployee.setLastName("Doe");
-        savedEmployee.setEmail("john@test.com");
+                employee.setFirstName("John");
+                employee.setLastName("Doe");
+                employee.setEmail("john@test.com");
 
-        EmployeeResponse response = new EmployeeResponse(
-                1L,
-                "John",
-                "Doe",
-                "john@test.com");
+                Employee savedEmployee = new Employee();
 
-        when(mapper.toEntity(request))
-                .thenReturn(employee);
+                savedEmployee.setId(1L);
+                savedEmployee.setFirstName("John");
+                savedEmployee.setLastName("Doe");
+                savedEmployee.setEmail("john@test.com");
 
-        when(employeeRepository.save(employee))
-                .thenReturn(savedEmployee);
+                EmployeeResponse response = new EmployeeResponse(
+                                1L,
+                                "John",
+                                "Doe",
+                                "john@test.com");
 
-        when(mapper.toResponse(savedEmployee))
-                .thenReturn(response);
+                when(mapper.toEntity(request))
+                                .thenReturn(employee);
 
-        EmployeeService service = new EmployeeService(
-                employeeRepository,
-                departmentRepository,
-                mapper);
+                when(employeeRepository.save(employee))
+                                .thenReturn(savedEmployee);
 
-        // when
-        EmployeeResponse result = service.create(request);
+                when(mapper.toResponse(savedEmployee))
+                                .thenReturn(response);
 
-        // then
-        verify(mapper).toEntity(request);
+                EmployeeService service = new EmployeeService(
+                                employeeRepository,
+                                departmentRepository,
+                                mapper,
+                                redisTemplate,
+                                eventPublisher);
 
-        verify(employeeRepository).save(employee);
+                // when
+                EmployeeResponse result = service.create(request);
 
-        verify(mapper).toResponse(savedEmployee);
-    }
+                // then
+                verify(mapper).toEntity(request);
 
-    @Test
-    void shouldDeleteEmployee() {
+                verify(employeeRepository).save(employee);
 
-        // given
-        Long id = 1L;
+                verify(mapper).toResponse(savedEmployee);
+        }
 
-        Employee employee = new Employee();
+        @Test
+        void shouldDeleteEmployee() {
 
-        employee.setId(id);
-        employee.setFirstName("John");
-        employee.setLastName("Doe");
-        employee.setEmail("john@test.com");
+                // given
+                Long id = 1L;
 
-        when(employeeRepository.findById(id))
-                .thenReturn(Optional.of(employee));
+                Employee employee = new Employee();
 
-        EmployeeService service = new EmployeeService(
-                employeeRepository,
-                departmentRepository,
-                mapper);
+                employee.setId(id);
+                employee.setFirstName("John");
+                employee.setLastName("Doe");
+                employee.setEmail("john@test.com");
 
-        // when
-        service.delete(id);
+                when(employeeRepository.findById(id))
+                                .thenReturn(Optional.of(employee));
 
-        // then
-        verify(employeeRepository).findById(id);
+                EmployeeService service = new EmployeeService(
+                                employeeRepository,
+                                departmentRepository,
+                                mapper,
+                                redisTemplate,
+                                eventPublisher);
 
-        verify(employeeRepository).delete(employee);
-    }
+                // when
+                service.delete(id);
 
-    @Test
-    void shouldNotDeleteWhenEmployeeDoesNotExist() {
+                // then
+                verify(employeeRepository).findById(id);
 
-        Long id = 100L;
+                verify(employeeRepository).delete(employee);
+        }
 
-        when(employeeRepository.findById(id))
-                .thenReturn(Optional.empty());
+        @Test
+        void shouldNotDeleteWhenEmployeeDoesNotExist() {
 
-        EmployeeService service = new EmployeeService(
-                employeeRepository,
-                departmentRepository,
-                mapper);
+                Long id = 100L;
 
-        assertThrows(
-                EmployeeNotFoundException.class,
-                () -> service.delete(id));
+                when(employeeRepository.findById(id))
+                                .thenReturn(Optional.empty());
 
-        verify(employeeRepository).findById(id);
+                EmployeeService service = new EmployeeService(
+                                employeeRepository,
+                                departmentRepository,
+                                mapper,
+                                redisTemplate,
+                                eventPublisher);
 
-        verify(employeeRepository, never())
-                .delete(any(Employee.class));
-    }
+                assertThrows(
+                                EmployeeNotFoundException.class,
+                                () -> service.delete(id));
 
-    @Test
-    void shouldUpdateEmployee() {
+                verify(employeeRepository).findById(id);
 
-        // given
-        Long id = 1L;
+                verify(employeeRepository, never())
+                                .delete(any(Employee.class));
+        }
 
-        EmployeeRequest request = new EmployeeRequest(
-                "Jane",
-                "Smith",
-                "jane@test.com");
+        @Test
+        void shouldUpdateEmployee() {
 
-        Employee employee = new Employee();
+                // given
+                Long id = 1L;
 
-        employee.setId(id);
-        employee.setFirstName("John");
-        employee.setLastName("Doe");
-        employee.setEmail("john@test.com");
+                EmployeeRequest request = new EmployeeRequest(
+                                "Jane",
+                                "Smith",
+                                "jane@test.com");
 
-        EmployeeResponse response = new EmployeeResponse(
-                id,
-                "Jane",
-                "Smith",
-                "jane@test.com");
+                Employee employee = new Employee();
 
-        when(employeeRepository.findById(id))
-                .thenReturn(Optional.of(employee));
+                employee.setId(id);
+                employee.setFirstName("John");
+                employee.setLastName("Doe");
+                employee.setEmail("john@test.com");
 
-        when(mapper.toResponse(employee))
-                .thenReturn(response);
+                EmployeeResponse response = new EmployeeResponse(
+                                id,
+                                "Jane",
+                                "Smith",
+                                "jane@test.com");
 
-        // when
-        EmployeeResponse result = service.update(id, request);
+                when(employeeRepository.findById(id))
+                                .thenReturn(Optional.of(employee));
 
-        // then
-        assertEquals("Jane", employee.getFirstName());
-        assertEquals("Smith", employee.getLastName());
-        assertEquals("jane@test.com", employee.getEmail());
+                when(mapper.toResponse(employee))
+                                .thenReturn(response);
 
-        assertEquals(response, result);
+                // when
+                EmployeeResponse result = service.update(id, request);
 
-        verify(employeeRepository).findById(id);
-        verify(mapper).toResponse(employee);
-    }
+                // then
+                assertEquals("Jane", employee.getFirstName());
+                assertEquals("Smith", employee.getLastName());
+                assertEquals("jane@test.com", employee.getEmail());
 
-    @Test
-    void shouldThrowExceptionWhenEmployeeNotFound() {
+                assertEquals(response, result);
 
-        // given
-        Long id = 100L;
+                verify(employeeRepository).findById(id);
+                verify(mapper).toResponse(employee);
+        }
 
-        when(employeeRepository.findById(id))
-                .thenReturn(Optional.empty());
+        @Test
+        void shouldThrowExceptionWhenEmployeeNotFound() {
 
-        EmployeeService service = new EmployeeService(
-                employeeRepository,
-                departmentRepository,
-                mapper);
+                // given
+                Long id = 100L;
 
-        // when + then
-        assertThrows(
-                EmployeeNotFoundException.class,
-                () -> service.findById(id));
-    }
+                when(employeeRepository.findById(id))
+                                .thenReturn(Optional.empty());
 
-    @Test
-    void shouldThrowExceptionWhenUpdatingUnknownEmployee() {
+                EmployeeService service = new EmployeeService(
+                                employeeRepository,
+                                departmentRepository,
+                                mapper,
+                                redisTemplate,
+                                eventPublisher);
 
-        // given
-        Long id = 100L;
+                // when + then
+                assertThrows(
+                                EmployeeNotFoundException.class,
+                                () -> service.findById(id));
+        }
 
-        EmployeeRequest request = new EmployeeRequest(
-                "Jane",
-                "Smith",
-                "jane@test.com");
+        @Test
+        void shouldThrowExceptionWhenUpdatingUnknownEmployee() {
 
-        when(employeeRepository.findById(id))
-                .thenReturn(Optional.empty());
+                // given
+                Long id = 100L;
 
-        // when + then
-        assertThrows(
-                EmployeeNotFoundException.class,
-                () -> service.update(id, request));
+                EmployeeRequest request = new EmployeeRequest(
+                                "Jane",
+                                "Smith",
+                                "jane@test.com");
 
-        verify(employeeRepository).findById(id);
+                when(employeeRepository.findById(id))
+                                .thenReturn(Optional.empty());
 
-        verify(mapper, never())
-                .toResponse(any(Employee.class));
-    }
+                // when + then
+                assertThrows(
+                                EmployeeNotFoundException.class,
+                                () -> service.update(id, request));
+
+                verify(employeeRepository).findById(id);
+
+                verify(mapper, never())
+                                .toResponse(any(Employee.class));
+        }
 
 }
