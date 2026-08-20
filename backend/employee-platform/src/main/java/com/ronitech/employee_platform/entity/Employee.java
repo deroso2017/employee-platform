@@ -22,6 +22,10 @@ public class Employee {
 
     private String phone;
 
+    private String profileImage;
+
+    private String profileImageContentType;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "department_id")
     // @JsonIgnore // Solution for the infinite recursion problem when serializing

@@ -2,14 +2,25 @@ package com.ronitech.employee_platform.controller;
 
 import com.ronitech.employee_platform.dto.EmployeeRequest;
 import com.ronitech.employee_platform.dto.EmployeeResponse;
+import com.ronitech.employee_platform.dto.FileResponse;
 import com.ronitech.employee_platform.service.EmployeeService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
 import jakarta.validation.Valid;
+
+import java.io.IOException;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
@@ -85,6 +96,32 @@ public class EmployeeController {
                 employeeId,
                 departmentId);
 
+    }
+
+    @Operation(summary = "Upload profile image")
+    @RequestBody(content = @Content(mediaType = "multipart/form-data"))
+    @PostMapping(value = "/{id}/profile-image", consumes = "multipart/form-data")
+    public EmployeeResponse uploadProfileImage(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file)
+            throws IOException {
+
+        return service.uploadProfileImage(
+                id,
+                file);
+    }
+
+    @GetMapping("/{id}/profile-image")
+    public ResponseEntity<byte[]> getProfileImage(
+            @PathVariable Long id)
+            throws IOException {
+
+        FileResponse file = service.getProfileImage(id);
+
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.parseMediaType(file.contentType()))
+                .body(file.data());
     }
 
 }

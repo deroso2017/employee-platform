@@ -44,6 +44,9 @@ class EmployeeServiceTest {
         @Mock
         private EmployeeEventPublisher eventPublisher;
 
+        @Mock
+        private FileStorageService fileStorageService;
+
         @InjectMocks
         private EmployeeService service;
 
@@ -89,7 +92,8 @@ class EmployeeServiceTest {
                                 departmentRepository,
                                 mapper,
                                 redisTemplate,
-                                eventPublisher);
+                                eventPublisher,
+                                fileStorageService);
 
                 // when
                 EmployeeResponse result = service.create(request);
@@ -123,7 +127,8 @@ class EmployeeServiceTest {
                                 departmentRepository,
                                 mapper,
                                 redisTemplate,
-                                eventPublisher);
+                                eventPublisher,
+                                fileStorageService);
 
                 // when
                 service.delete(id);
@@ -147,7 +152,8 @@ class EmployeeServiceTest {
                                 departmentRepository,
                                 mapper,
                                 redisTemplate,
-                                eventPublisher);
+                                eventPublisher,
+                                fileStorageService);
 
                 assertThrows(
                                 EmployeeNotFoundException.class,
@@ -217,7 +223,8 @@ class EmployeeServiceTest {
                                 departmentRepository,
                                 mapper,
                                 redisTemplate,
-                                eventPublisher);
+                                eventPublisher,
+                                fileStorageService);
 
                 // when + then
                 assertThrows(

@@ -2,6 +2,7 @@ package com.ronitech.employee_platform.service;
 
 import com.ronitech.employee_platform.dto.EmployeeRequest;
 import com.ronitech.employee_platform.dto.EmployeeResponse;
+import com.ronitech.employee_platform.dto.FileResponse;
 import com.ronitech.employee_platform.entity.Department;
 import com.ronitech.employee_platform.entity.Employee;
 import com.ronitech.employee_platform.event.EmployeeCreatedEvent;
@@ -17,7 +18,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
 
@@ -29,15 +33,17 @@ public class EmployeeService {
         private final EmployeeMapper mapper;
         private final RedisTemplate<String, Object> redisTemplate;
         private final EmployeeEventPublisher eventPublisher;
+        private final FileStorageService fileStorageService;
 
         public EmployeeService(EmployeeRepository employeeRepository, DepartmentRepository departmentRepository,
                         EmployeeMapper mapper, RedisTemplate<String, Object> redisTemplate,
-                        EmployeeEventPublisher eventPublisher) {
+                        EmployeeEventPublisher eventPublisher, FileStorageService fileStorageService) {
                 this.employeeRepository = employeeRepository;
                 this.departmentRepository = departmentRepository;
                 this.mapper = mapper;
                 this.redisTemplate = redisTemplate;
                 this.eventPublisher = eventPublisher;
+                this.fileStorageService = fileStorageService;
         }
 
         private String employeeCacheKey(Long id) {
@@ -160,6 +166,79 @@ public class EmployeeService {
 
                 return mapper.toResponse(
                                 employeeRepository.save(employee));
+        }
+
+        public EmployeeResponse uploadProfileImage(
+                        Long employeeId,
+                        MultipartFile file) throws IOException {
+
+                Employee employee = employeeRepository
+                                .findById(employeeId)
+                                .orElseThrow(() -> new EmployeeNotFoundException(employeeId));
+
+                validateProfileImage(file);
+
+                String filename = fileStorageService.store(file, employeeId);
+
+                employee.setProfileImage(filename);
+                employee.setProfileImageContentType(
+                                file.getContentType());
+
+                Employee savedEmployee = employeeRepository.save(employee);
+
+                return mapper.toResponse(savedEmployee);
+        }
+
+        public FileResponse getProfileImage(
+                        Long employeeId)
+                        throws IOException {
+
+                Employee employee = employeeRepository.findById(employeeId)
+                                .orElseThrow(() -> new EmployeeNotFoundException(
+                                                employeeId));
+
+                if (employee.getProfileImage() == null) {
+                        throw new FileNotFoundException(
+                                        "Employee has no profile image");
+                }
+
+                byte[] data = fileStorageService.load(
+                                employee.getProfileImage());
+
+                return new FileResponse(
+                                data,
+                                employee.getProfileImageContentType());
+        }
+
+        private void validateProfileImage(
+                        MultipartFile file) {
+
+                if (file == null || file.isEmpty()) {
+                        throw new IllegalArgumentException(
+                                        "Profile image must not be empty");
+                }
+
+                long maxSize = 5 * 1024 * 1024;
+
+                if (file.getSize() > maxSize) {
+                        throw new IllegalArgumentException(
+                                        "Profile image must not exceed 5 MB");
+                }
+
+                String contentType = file.getContentType();
+
+                if (!isAllowedImageType(contentType)) {
+                        throw new IllegalArgumentException(
+                                        "Only JPEG, PNG and WebP images are allowed");
+                }
+        }
+
+        private boolean isAllowedImageType(
+                        String contentType) {
+
+                return "image/jpeg".equals(contentType)
+                                || "image/png".equals(contentType)
+                                || "image/webp".equals(contentType);
         }
 
 }
