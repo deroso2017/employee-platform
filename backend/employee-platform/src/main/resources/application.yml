@@ -41,5 +41,13 @@ jwt:
 refresh:
   expiration: ${REFRESH_EXPIRATION:2592000000}
 
+logging:
+  level:
+    root: INFO
+    com.ronitech.employee_platform: DEBUG
+    org.hibernate.SQL: DEBUG # don't use it in production 
+  file:
+    name: logs/employee-platform.log
+
 server:
   port: 8080
