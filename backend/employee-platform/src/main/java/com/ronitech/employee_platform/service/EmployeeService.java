@@ -13,6 +13,7 @@ import com.ronitech.employee_platform.repository.DepartmentRepository;
 import com.ronitech.employee_platform.repository.EmployeeRepository;
 
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,8 +24,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.time.Duration;
-import java.util.List;
 
+@Slf4j
 @Service
 public class EmployeeService {
 
@@ -65,6 +66,7 @@ public class EmployeeService {
         }
 
         public EmployeeResponse findById(Long id) {
+                log.debug("Finding employee with id: {}", id);
 
                 String key = employeeCacheKey(id);
 
@@ -77,7 +79,12 @@ public class EmployeeService {
                 }
 
                 Employee employee = employeeRepository.findById(id)
-                                .orElseThrow(() -> new EmployeeNotFoundException(id));
+                                .orElseThrow(() -> {
+                                        log.warn(
+                                                        "Employee not found: {}",
+                                                        id);
+                                        return new EmployeeNotFoundException(id);
+                                });
 
                 EmployeeResponse response = mapper.toResponse(employee);
 
@@ -92,6 +99,9 @@ public class EmployeeService {
         }
 
         public EmployeeResponse create(EmployeeRequest request) {
+                log.info(
+                                "Creating employee with email: {}",
+                                request.email());
 
                 Employee employee = mapper.toEntity(request);
 
@@ -104,6 +114,10 @@ public class EmployeeService {
                                 savedEmployee.getEmail());
 
                 eventPublisher.publishEmployeeCreated(event);
+
+                log.info(
+                                "Employee created successfully with id: {}",
+                                savedEmployee.getId());
 
                 return mapper.toResponse(savedEmployee);
 
@@ -172,11 +186,27 @@ public class EmployeeService {
                         Long employeeId,
                         MultipartFile file) throws IOException {
 
+                log.info(
+                                "Uploading profile image for employee {}",
+                                employeeId);
+
                 Employee employee = employeeRepository
                                 .findById(employeeId)
-                                .orElseThrow(() -> new EmployeeNotFoundException(employeeId));
+                                .orElseThrow(() -> {
+                                        log.warn(
+                                                        "Employee not found: {}",
+                                                        employeeId);
+
+                                        return new EmployeeNotFoundException(
+                                                        employeeId);
+                                });
 
                 validateProfileImage(file);
+
+                log.debug(
+                                "Profile image validated: type={}, size={}",
+                                file.getContentType(),
+                                file.getSize());
 
                 String filename = fileStorageService.store(file, employeeId);
 
@@ -185,6 +215,10 @@ public class EmployeeService {
                                 file.getContentType());
 
                 Employee savedEmployee = employeeRepository.save(employee);
+
+                log.info(
+                                "Profile image uploaded successfully for employee {}",
+                                employeeId);
 
                 return mapper.toResponse(savedEmployee);
         }
