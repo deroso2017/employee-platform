@@ -30,6 +30,7 @@ dependencies {
 	implementation("io.github.cdimascio:dotenv-java:3.1.0")
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 	implementation 'org.springframework.boot:spring-boot-starter-amqp'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation("io.jsonwebtoken:jjwt-api:0.12.7")
 	runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.7")
 	runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.7")
