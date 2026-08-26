@@ -5,6 +5,7 @@ import com.ronitech.employee_platform.dto.RegisterResponse;
 import com.ronitech.employee_platform.dto.auth.LoginRequest;
 import com.ronitech.employee_platform.dto.auth.LoginResponse;
 import com.ronitech.employee_platform.dto.auth.LogoutRequest;
+import com.ronitech.employee_platform.dto.auth.PasswordResetRequest;
 import com.ronitech.employee_platform.dto.auth.RefreshRequest;
 import com.ronitech.employee_platform.entity.User;
 import com.ronitech.employee_platform.service.AuthService;
@@ -80,6 +81,24 @@ public class AuthController {
 
         return user;
 
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Void> forgotPassword(
+            @RequestParam String email) {
+
+        service.requestPasswordReset(email);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(
+            @Valid @RequestBody PasswordResetRequest request) {
+
+        service.resetPassword(request);
+
+        return ResponseEntity.ok().build();
     }
 
 }

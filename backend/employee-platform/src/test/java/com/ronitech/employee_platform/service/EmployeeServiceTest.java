@@ -20,9 +20,9 @@ import org.springframework.data.redis.core.RedisTemplate;
 import com.ronitech.employee_platform.dto.EmployeeRequest;
 import com.ronitech.employee_platform.dto.EmployeeResponse;
 import com.ronitech.employee_platform.entity.Employee;
-import com.ronitech.employee_platform.event.EmployeeEventPublisher;
 import com.ronitech.employee_platform.exception.EmployeeNotFoundException;
 import com.ronitech.employee_platform.mapper.EmployeeMapper;
+import com.ronitech.employee_platform.publisher.EmployeeEventPublisher;
 import com.ronitech.employee_platform.repository.DepartmentRepository;
 import com.ronitech.employee_platform.repository.EmployeeRepository;
 
