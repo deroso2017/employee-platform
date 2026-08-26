@@ -34,6 +34,18 @@ spring:
     username: ${RABBITMQ_USERNAME:guest}
     password: ${RABBITMQ_PASSWORD:guest}
 
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 jwt:
   secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION:900000}
@@ -58,6 +70,9 @@ management:
   endpoint:
     health:
       show-details: always
+      
+password-reset:
+  expiration-minutes: ${PASSWORD_RESET_EXPIRATION_MINUTES:30}
 
 server:
   port: 8080
