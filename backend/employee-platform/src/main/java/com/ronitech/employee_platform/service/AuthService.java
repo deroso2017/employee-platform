@@ -5,11 +5,16 @@ import com.ronitech.employee_platform.dto.RegisterResponse;
 import com.ronitech.employee_platform.dto.auth.LoginRequest;
 import com.ronitech.employee_platform.dto.auth.LoginResponse;
 import com.ronitech.employee_platform.dto.auth.LogoutRequest;
+import com.ronitech.employee_platform.dto.auth.PasswordResetRequest;
 import com.ronitech.employee_platform.dto.auth.RefreshRequest;
+import com.ronitech.employee_platform.entity.PasswordResetToken;
 import com.ronitech.employee_platform.entity.RefreshToken;
 import com.ronitech.employee_platform.entity.User;
+import com.ronitech.employee_platform.event.PasswordResetRequestedEvent;
+import com.ronitech.employee_platform.event.UserRegisteredEvent;
 import com.ronitech.employee_platform.exception.EmailAlreadyExistsException;
 import com.ronitech.employee_platform.mapper.UserMapper;
+import com.ronitech.employee_platform.publisher.NotificationEventPublisher;
 import com.ronitech.employee_platform.repository.RefreshTokenRepository;
 import com.ronitech.employee_platform.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +39,8 @@ public class AuthService {
         private final AuthenticationManager authenticationManager;
         private final JwtService jwtService;
         private final RefreshTokenService refreshTokenService;
+        private final NotificationEventPublisher notificationEventPublisher;
+        private final PasswordResetService passwordResetService;
 
         public RegisterResponse register(RegisterRequest request) {
 
@@ -46,8 +53,14 @@ public class AuthService {
                 user.setPassword(
                                 passwordEncoder.encode(request.password()));
 
-                return mapper.toResponse(
-                                repository.save(user));
+                User savedUser = repository.save(user);
+
+                notificationEventPublisher.publishUserRegistered(
+                                new UserRegisteredEvent(
+                                                savedUser.getId(),
+                                                savedUser.getEmail()));
+
+                return mapper.toResponse(savedUser);
         }
 
         public LoginResponse login(LoginRequest request) {
@@ -98,6 +111,36 @@ public class AuthService {
 
                 refreshTokenService.revokeAll(user);
 
+        }
+
+        public void requestPasswordReset(String email) {
+                repository.findByEmail(email)
+                                .ifPresent(user -> {
+                                        String resetToken = passwordResetService.createToken(user);
+
+                                        notificationEventPublisher
+                                                        .publishPasswordResetRequested(
+                                                                        new PasswordResetRequestedEvent(
+                                                                                        user.getId(),
+                                                                                        user.getEmail(),
+                                                                                        resetToken));
+                                });
+        }
+
+        @Transactional
+        public void resetPassword(
+                        PasswordResetRequest request) {
+
+                PasswordResetToken resetToken = passwordResetService.validateToken(
+                                request.token());
+
+                User user = resetToken.getUser();
+
+                user.setPassword(
+                                passwordEncoder.encode(
+                                                request.newPassword()));
+
+                resetToken.markAsUsed();
         }
 
 }

@@ -1,9 +1,10 @@
-package com.ronitech.employee_platform.event;
+package com.ronitech.employee_platform.publisher;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
 import com.ronitech.employee_platform.config.RabbitMQConfig;
+import com.ronitech.employee_platform.event.EmployeeCreatedEvent;
 
 @Component
 public class EmployeeEventPublisher {
