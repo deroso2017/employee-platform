@@ -29,21 +29,21 @@ Employee Platform is a **production-ready, full-stack web application** for mana
 
 ## ✨ Features
 
-| Feature | Description |
-|---|---|
-| 🔐 **JWT Authentication** | Secure login/register with access tokens + refresh tokens |
-| 🔄 **Token Refresh** | Automatic silent token renewal with interceptor logic |
-| 🛡️ **Role-Based Access** | Fine-grained permissions for `ADMIN`, `MANAGER`, and `USER` roles |
-| 👥 **Employee Management** | Full CRUD with server-side pagination and name search |
-| 🏢 **Department Management** | Create, update, delete, and assign departments to employees |
-| 🖼️ **Profile Image Upload** | Upload and serve per-employee profile images |
-| 📧 **Password Reset** | Secure email-based password reset flow with expiring tokens |
-| 📨 **Event-Driven Notifications** | RabbitMQ-powered async event publishing and consuming |
-| ⚡ **Redis Caching** | Fast refresh token storage and blacklisting via Redis |
-| 📖 **OpenAPI / Swagger UI** | Interactive API docs at `/swagger-ui.html` |
-| 📊 **Spring Actuator** | Health checks and application metrics endpoints |
-| 🐳 **Docker Compose** | One-command infrastructure setup for all services |
-| 🤖 **GitHub Actions CI** | Automated test and build pipeline on every push |
+| Feature                           | Description                                                       |
+| --------------------------------- | ----------------------------------------------------------------- |
+| 🔐 **JWT Authentication**         | Secure login/register with access tokens + refresh tokens         |
+| 🔄 **Token Refresh**              | Automatic silent token renewal with interceptor logic             |
+| 🛡️ **Role-Based Access**          | Fine-grained permissions for `ADMIN`, `MANAGER`, and `USER` roles |
+| 👥 **Employee Management**        | Full CRUD with server-side pagination and name search             |
+| 🏢 **Department Management**      | Create, update, delete, and assign departments to employees       |
+| 🖼️ **Profile Image Upload**       | Upload and serve per-employee profile images                      |
+| 📧 **Password Reset**             | Secure email-based password reset flow with expiring tokens       |
+| 📨 **Event-Driven Notifications** | RabbitMQ-powered async event publishing and consuming             |
+| ⚡ **Redis Caching**              | Fast refresh token storage and blacklisting via Redis             |
+| 📖 **OpenAPI / Swagger UI**       | Interactive API docs at `/swagger-ui.html`                        |
+| 📊 **Spring Actuator**            | Health checks and application metrics endpoints                   |
+| 🐳 **Docker Compose**             | One-command infrastructure setup for all services                 |
+| 🤖 **GitHub Actions CI**          | Automated test and build pipeline on every push                   |
 
 ---
 
@@ -154,29 +154,29 @@ Employee Platform is a **production-ready, full-stack web application** for mana
 │                         Browser                              │
 │                    Next.js 16 (React 19)                     │
 │              Tailwind CSS v4 + shadcn/ui                     │
-│           Pages: /login · /register · /dashboard            │
+│           Pages: /login · /register · /dashboard             │
 │                     /departments                             │
 └──────────────────────┬───────────────────────────────────────┘
                        │  HTTP/REST (Axios + JWT Bearer)
                        ▼
 ┌──────────────────────────────────────────────────────────────┐
 │                  Spring Boot 4.1 (Java 22)                   │
-│  ┌────────────┐  ┌────────────┐  ┌─────────────────────────┐│
-│  │ AuthCtrl   │  │EmployeeCtrl│  │  DepartmentController   ││
-│  │ /api/auth  │  │/api/empl.. │  │  /api/departments       ││
-│  └─────┬──────┘  └─────┬──────┘  └──────────┬──────────────┘│
+│  ┌────────────┐  ┌────────────┐  ┌─────────────────────────┐ │
+│  │ AuthCtrl   │  │EmployeeCtrl│  │  DepartmentController   │ │
+│  │ /api/auth  │  │/api/empl.. │  │  /api/departments       │ │
+│  └─────┬──────┘  └─────┬──────┘  └──────────┬──────────────┘ │
 │        │               │                     │               │
 │  ┌─────▼───────────────▼─────────────────────▼──────────────┐│
-│  │            Service Layer (Business Logic)                 ││
+│  │            Service Layer (Business Logic)                ││
 │  │  AuthService · EmployeeService · DepartmentService       ││
 │  │  JwtService · RefreshTokenService · PasswordResetService ││
 │  └─────┬────────────────────────┬──────────────────────┬────┘│
-│        │                        │                      │      │
-│  ┌─────▼──────┐  ┌──────────────▼──────┐   ┌──────────▼────┐│
-│  │JPA Repos   │  │ RabbitMQ Publishers  │   │  Redis Cache  ││
-│  │(Hibernate) │  │  & Consumers         │   │  (Tokens)     ││
-│  └─────┬──────┘  └──────────────┬───────┘   └───────────────┘│
-└────────│──────────────────────── │─────────────────────────────┘
+│        │                        │                      │     │
+│  ┌─────▼──────┐  ┌──────────────▼──────┐    ┌──────────▼────┐│
+│  │JPA Repos   │  │ RabbitMQ Publishers │    │  Redis Cache  ││
+│  │(Hibernate) │  │  & Consumers        │    │  (Tokens)     ││
+│  └─────┬──────┘  └──────────────┬──────┘    └───────────────┘│
+└────────│──────────────────────── │───────────────────────────┘
          │                         │
          ▼                         ▼
    ┌─────────────┐         ┌──────────────┐
@@ -221,7 +221,7 @@ AuthService      ──publish──►  NotificationEventPublisher
                                RabbitMQ Exchange
                                         │
                       ┌─────────────────┴──────────────────┐
-                      ▼                                     ▼
+                      ▼                                    ▼
              EmployeeEventConsumer           NotificationEventConsumer
              (log / process events)          (send emails / alerts)
 ```
@@ -361,40 +361,40 @@ docker build -t employee-platform-backend .
 
 ## 📡 API Reference
 
-### Authentication  `/api/auth`
+### Authentication `/api/auth`
 
-| Method | Endpoint | Access | Description |
-|--------|----------|--------|-------------|
-| `POST` | `/api/auth/register` | Public | Register a new user |
-| `POST` | `/api/auth/login` | Public | Login and receive JWT tokens |
-| `POST` | `/api/auth/logout` | Authenticated | Revoke refresh token |
-| `POST` | `/api/auth/refresh` | Public | Refresh access token |
-| `GET`  | `/api/auth/profile` | Authenticated | Get current user profile |
-| `POST` | `/api/auth/forgot-password` | Public | Request password reset email |
-| `POST` | `/api/auth/reset-password` | Public | Reset password with token |
+| Method | Endpoint                    | Access        | Description                  |
+| ------ | --------------------------- | ------------- | ---------------------------- |
+| `POST` | `/api/auth/register`        | Public        | Register a new user          |
+| `POST` | `/api/auth/login`           | Public        | Login and receive JWT tokens |
+| `POST` | `/api/auth/logout`          | Authenticated | Revoke refresh token         |
+| `POST` | `/api/auth/refresh`         | Public        | Refresh access token         |
+| `GET`  | `/api/auth/profile`         | Authenticated | Get current user profile     |
+| `POST` | `/api/auth/forgot-password` | Public        | Request password reset email |
+| `POST` | `/api/auth/reset-password`  | Public        | Reset password with token    |
 
-### Employees  `/api/employees`
+### Employees `/api/employees`
 
-| Method | Endpoint | Access | Description |
-|--------|----------|--------|-------------|
-| `GET`    | `/api/employees` | Authenticated | List employees (paginated) |
-| `GET`    | `/api/employees/{id}` | Authenticated | Get employee by ID |
-| `GET`    | `/api/employees/search?name=` | Authenticated | Search by name (paginated) |
-| `POST`   | `/api/employees` | ADMIN / MANAGER | Create new employee |
-| `PUT`    | `/api/employees/{id}` | ADMIN | Update employee |
-| `DELETE` | `/api/employees/{id}` | ADMIN | Delete employee |
-| `PUT`    | `/api/employees/{id}/department/{deptId}` | Authenticated | Assign department |
-| `POST`   | `/api/employees/{id}/profile-image` | Authenticated | Upload profile image |
-| `GET`    | `/api/employees/{id}/profile-image` | Authenticated | Get profile image |
+| Method   | Endpoint                                  | Access          | Description                |
+| -------- | ----------------------------------------- | --------------- | -------------------------- |
+| `GET`    | `/api/employees`                          | Authenticated   | List employees (paginated) |
+| `GET`    | `/api/employees/{id}`                     | Authenticated   | Get employee by ID         |
+| `GET`    | `/api/employees/search?name=`             | Authenticated   | Search by name (paginated) |
+| `POST`   | `/api/employees`                          | ADMIN / MANAGER | Create new employee        |
+| `PUT`    | `/api/employees/{id}`                     | ADMIN           | Update employee            |
+| `DELETE` | `/api/employees/{id}`                     | ADMIN           | Delete employee            |
+| `PUT`    | `/api/employees/{id}/department/{deptId}` | Authenticated   | Assign department          |
+| `POST`   | `/api/employees/{id}/profile-image`       | Authenticated   | Upload profile image       |
+| `GET`    | `/api/employees/{id}/profile-image`       | Authenticated   | Get profile image          |
 
-### Departments  `/api/departments`
+### Departments `/api/departments`
 
-| Method | Endpoint | Access | Description |
-|--------|----------|--------|-------------|
-| `GET`    | `/api/departments` | Authenticated | List all departments |
-| `POST`   | `/api/departments` | Authenticated | Create department |
-| `PUT`    | `/api/departments/{id}` | Authenticated | Update department |
-| `DELETE` | `/api/departments/{id}` | Authenticated | Delete department |
+| Method   | Endpoint                | Access        | Description          |
+| -------- | ----------------------- | ------------- | -------------------- |
+| `GET`    | `/api/departments`      | Authenticated | List all departments |
+| `POST`   | `/api/departments`      | Authenticated | Create department    |
+| `PUT`    | `/api/departments/{id}` | Authenticated | Update department    |
+| `DELETE` | `/api/departments/{id}` | Authenticated | Delete department    |
 
 ### Role Permissions Summary
 
@@ -492,10 +492,10 @@ push/PR ──► Checkout ──► Setup Java 22 (Temurin) ──► Run Tests
 
 ## 🐳 Docker Infrastructure Details
 
-| Container | Image | Port(s) |
-|---|---|---|
-| `employee-postgres` | `postgres:17` | `5432` |
-| `employee-redis` | `redis:7` | `6379` |
+| Container           | Image                   | Port(s)         |
+| ------------------- | ----------------------- | --------------- |
+| `employee-postgres` | `postgres:17`           | `5432`          |
+| `employee-redis`    | `redis:7`               | `6379`          |
 | `employee-rabbitmq` | `rabbitmq:4-management` | `5672`, `15672` |
 
 Access the **RabbitMQ Management UI** at `http://localhost:15672` (default: `guest` / `guest`)
@@ -506,30 +506,30 @@ Access the **RabbitMQ Management UI** at `http://localhost:15672` (default: `gue
 
 ### Backend (`.env`)
 
-| Variable | Description | Default |
-|---|---|---|
-| `DB_URL` | PostgreSQL JDBC connection URL | `jdbc:postgresql://localhost:5432/employee_platform` |
-| `DB_USERNAME` | Database username | `postgres` |
-| `DB_PASSWORD` | Database password | `postgres` |
-| `JWT_SECRET` | Secret key for signing JWTs | — |
-| `JWT_EXPIRATION` | Access token TTL in milliseconds | `900000` (15 min) |
-| `REFRESH_EXPIRATION` | Refresh token TTL in milliseconds | `2592000000` (30 days) |
-| `REDIS_HOST` | Redis hostname | `localhost` |
-| `REDIS_PORT` | Redis port | `6379` |
-| `RABBITMQ_HOST` | RabbitMQ hostname | `localhost` |
-| `RABBITMQ_USERNAME` | RabbitMQ username | `guest` |
-| `RABBITMQ_PASSWORD` | RabbitMQ password | `guest` |
-| `RABBITMQ_PORT` | RabbitMQ AMQP port | `5672` |
-| `MAIL_HOST` | SMTP host | `smtp.gmail.com` |
-| `MAIL_PORT` | SMTP port | `587` |
-| `MAIL_USERNAME` | Sender email address | — |
-| `MAIL_PASSWORD` | SMTP password / app password | — |
-| `PASSWORD_RESET_EXPIRATION_MINUTES` | Password reset token validity | `30` |
+| Variable                            | Description                       | Default                                              |
+| ----------------------------------- | --------------------------------- | ---------------------------------------------------- |
+| `DB_URL`                            | PostgreSQL JDBC connection URL    | `jdbc:postgresql://localhost:5432/employee_platform` |
+| `DB_USERNAME`                       | Database username                 | `postgres`                                           |
+| `DB_PASSWORD`                       | Database password                 | `postgres`                                           |
+| `JWT_SECRET`                        | Secret key for signing JWTs       | —                                                    |
+| `JWT_EXPIRATION`                    | Access token TTL in milliseconds  | `900000` (15 min)                                    |
+| `REFRESH_EXPIRATION`                | Refresh token TTL in milliseconds | `2592000000` (30 days)                               |
+| `REDIS_HOST`                        | Redis hostname                    | `localhost`                                          |
+| `REDIS_PORT`                        | Redis port                        | `6379`                                               |
+| `RABBITMQ_HOST`                     | RabbitMQ hostname                 | `localhost`                                          |
+| `RABBITMQ_USERNAME`                 | RabbitMQ username                 | `guest`                                              |
+| `RABBITMQ_PASSWORD`                 | RabbitMQ password                 | `guest`                                              |
+| `RABBITMQ_PORT`                     | RabbitMQ AMQP port                | `5672`                                               |
+| `MAIL_HOST`                         | SMTP host                         | `smtp.gmail.com`                                     |
+| `MAIL_PORT`                         | SMTP port                         | `587`                                                |
+| `MAIL_USERNAME`                     | Sender email address              | —                                                    |
+| `MAIL_PASSWORD`                     | SMTP password / app password      | —                                                    |
+| `PASSWORD_RESET_EXPIRATION_MINUTES` | Password reset token validity     | `30`                                                 |
 
 ### Frontend (`.env.local`)
 
-| Variable | Description |
-|---|---|
+| Variable              | Description                         |
+| --------------------- | ----------------------------------- |
 | `NEXT_PUBLIC_API_URL` | Base URL of the Spring Boot backend |
 
 ---
