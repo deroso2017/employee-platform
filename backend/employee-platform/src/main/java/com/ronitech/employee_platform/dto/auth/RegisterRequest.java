@@ -1,4 +1,4 @@
-package com.ronitech.employee_platform.dto;
+package com.ronitech.employee_platform.dto.auth;
 
 import com.ronitech.employee_platform.entity.Role;
 import jakarta.validation.constraints.Email;
@@ -6,11 +6,11 @@ import jakarta.validation.constraints.NotBlank;
 
 public record RegisterRequest(
 
-        @Email String email,
+                @Email String email,
 
-        @NotBlank String password,
+                @NotBlank String password,
 
-        Role role
+                Role role
 
 ) {
 }

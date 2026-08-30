@@ -1,12 +1,12 @@
 package com.ronitech.employee_platform.controller;
 
-import com.ronitech.employee_platform.dto.RegisterRequest;
-import com.ronitech.employee_platform.dto.RegisterResponse;
 import com.ronitech.employee_platform.dto.auth.LoginRequest;
 import com.ronitech.employee_platform.dto.auth.LoginResponse;
 import com.ronitech.employee_platform.dto.auth.LogoutRequest;
 import com.ronitech.employee_platform.dto.auth.PasswordResetRequest;
 import com.ronitech.employee_platform.dto.auth.RefreshRequest;
+import com.ronitech.employee_platform.dto.auth.RegisterRequest;
+import com.ronitech.employee_platform.dto.auth.RegisterResponse;
 import com.ronitech.employee_platform.entity.User;
 import com.ronitech.employee_platform.service.AuthService;
 import jakarta.validation.Valid;

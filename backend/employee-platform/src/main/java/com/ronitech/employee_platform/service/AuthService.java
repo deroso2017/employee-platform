@@ -1,12 +1,12 @@
 package com.ronitech.employee_platform.service;
 
-import com.ronitech.employee_platform.dto.RegisterRequest;
-import com.ronitech.employee_platform.dto.RegisterResponse;
 import com.ronitech.employee_platform.dto.auth.LoginRequest;
 import com.ronitech.employee_platform.dto.auth.LoginResponse;
 import com.ronitech.employee_platform.dto.auth.LogoutRequest;
 import com.ronitech.employee_platform.dto.auth.PasswordResetRequest;
 import com.ronitech.employee_platform.dto.auth.RefreshRequest;
+import com.ronitech.employee_platform.dto.auth.RegisterRequest;
+import com.ronitech.employee_platform.dto.auth.RegisterResponse;
 import com.ronitech.employee_platform.entity.PasswordResetToken;
 import com.ronitech.employee_platform.entity.RefreshToken;
 import com.ronitech.employee_platform.entity.User;
@@ -15,11 +15,8 @@ import com.ronitech.employee_platform.event.UserRegisteredEvent;
 import com.ronitech.employee_platform.exception.EmailAlreadyExistsException;
 import com.ronitech.employee_platform.mapper.UserMapper;
 import com.ronitech.employee_platform.publisher.NotificationEventPublisher;
-import com.ronitech.employee_platform.repository.RefreshTokenRepository;
 import com.ronitech.employee_platform.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-
-import java.util.UUID;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -33,7 +30,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
         private final UserRepository repository;
-        private final RefreshTokenRepository refreshTokenRepository;
         private final UserMapper mapper;
         private final PasswordEncoder passwordEncoder;
         private final AuthenticationManager authenticationManager;
