@@ -74,5 +74,10 @@ management:
 password-reset:
   expiration-minutes: ${PASSWORD_RESET_EXPIRATION_MINUTES:30}
 
+app:
+  initial-admin:
+    email: ${INITIAL_ADMIN_EMAIL:}
+    password: ${INITIAL_ADMIN_PASSWORD:}
+
 server:
   port: 8080

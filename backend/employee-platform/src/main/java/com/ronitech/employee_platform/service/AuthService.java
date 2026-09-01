@@ -9,6 +9,7 @@ import com.ronitech.employee_platform.dto.auth.RegisterRequest;
 import com.ronitech.employee_platform.dto.auth.RegisterResponse;
 import com.ronitech.employee_platform.entity.PasswordResetToken;
 import com.ronitech.employee_platform.entity.RefreshToken;
+import com.ronitech.employee_platform.entity.Role;
 import com.ronitech.employee_platform.entity.User;
 import com.ronitech.employee_platform.event.PasswordResetRequestedEvent;
 import com.ronitech.employee_platform.event.UserRegisteredEvent;
@@ -48,6 +49,8 @@ public class AuthService {
 
                 user.setPassword(
                                 passwordEncoder.encode(request.password()));
+
+                user.setRole(Role.USER);
 
                 User savedUser = repository.save(user);
 
@@ -137,6 +140,18 @@ public class AuthService {
                                                 request.newPassword()));
 
                 resetToken.markAsUsed();
+        }
+
+        @Transactional
+        public void changeRole(
+                        Long userId,
+                        Role newRole) {
+
+                User user = repository.findById(userId)
+                                .orElseThrow(() -> new IllegalArgumentException(
+                                                "User not found"));
+
+                user.setRole(newRole);
         }
 
 }

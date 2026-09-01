@@ -1,5 +1,6 @@
 package com.ronitech.employee_platform.controller;
 
+import com.ronitech.employee_platform.dto.auth.ChangeRoleRequest;
 import com.ronitech.employee_platform.dto.auth.LoginRequest;
 import com.ronitech.employee_platform.dto.auth.LoginResponse;
 import com.ronitech.employee_platform.dto.auth.LogoutRequest;
@@ -13,6 +14,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -99,6 +101,19 @@ public class AuthController {
         service.resetPassword(request);
 
         return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping("users/{id}/role")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> changeRole(
+            @PathVariable Long id,
+            @Valid @RequestBody ChangeRoleRequest request) {
+
+        service.changeRole(
+                id,
+                request.role());
+
+        return ResponseEntity.noContent().build();
     }
 
 }
