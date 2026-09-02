@@ -3,21 +3,11 @@
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "@/components/ui/toast";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 export default function Navbar() {
-  const { user, logout, refreshToken } = useAuth();
-
-  async function handleRefreshToken() {
-    try {
-      await refreshToken();
-      toast.add({ title: "Token refreshed", type: "success" });
-    } catch {
-      toast.add({ title: "Failed to refresh token", type: "error" });
-    }
-  }
+  const { user, logout } = useAuth();
   const pathname = usePathname();
 
   const navLinks = [
@@ -55,9 +45,6 @@ export default function Navbar() {
               {user.role}
             </Badge>
           )}
-          <Button variant="outline" size="sm" onClick={handleRefreshToken}>
-            Refresh Token
-          </Button>
           <Button variant="outline" size="sm" onClick={logout}>
             Sign out
           </Button>

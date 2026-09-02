@@ -1,10 +1,5 @@
 import axios from "axios";
-import {
-  clearTokens,
-  getAccessToken,
-  getRefreshToken,
-  setTokens,
-} from "./auth";
+import { getAccessToken, setAccessToken } from "./auth";
 import type { Department, Employee, LoginResponse, Page, User } from "./types";
 
 const api = axios.create({
@@ -25,30 +20,31 @@ api.interceptors.response.use(
     const original = error.config;
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true;
-      const refreshToken = getRefreshToken();
-      if (refreshToken) {
-        try {
-          if (!refreshPromise) {
-            refreshPromise = axios
-              .post<LoginResponse>("/api/auth/refresh", { refreshToken })
-              .then(({ data }) => {
-                setTokens(data.accessToken, data.refreshToken);
-                return data.accessToken;
-              })
-              .finally(() => {
-                refreshPromise = null;
-              });
-          }
-          const accessToken = await refreshPromise;
-          original.headers.Authorization = `Bearer ${accessToken}`;
-          return api(original);
-        } catch {
-          clearTokens();
-          window.location.href = "/login";
-        }
-      } else {
-        clearTokens();
-        window.location.href = "/login";
+
+      if (!refreshPromise) {
+        refreshPromise = fetch("/api/auth/set-tokens", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "refresh" }),
+        })
+          .then((res) => {
+            if (!res.ok) throw new Error("Refresh failed");
+            return res.json() as Promise<LoginResponse>;
+          })
+          .then((data) => {
+            setAccessToken(data.accessToken);
+            return data.accessToken;
+          })
+          .finally(() => {
+            refreshPromise = null;
+          });
+      }
+      try {
+        const newToken = await refreshPromise;
+        original.headers.Authorization = `Bearer ${newToken}`;
+        return api(original);
+      } catch {
+        return Promise.reject(error);
       }
     }
     return Promise.reject(error);
@@ -57,15 +53,21 @@ api.interceptors.response.use(
 
 // Auth
 export const authApi = {
-  register: (email: string, password: string, role: string) =>
-    api.post("/api/auth/register", { email, password, role }),
   login: (email: string, password: string) =>
     api.post<LoginResponse>("/api/auth/login", { email, password }),
-  logout: (refreshToken: string) =>
-    api.post("/api/auth/logout", { refreshToken }),
+  logout: () => fetch("/api/auth/set-tokens", { method: "DELETE" }),
   profile: () => api.get<User>("/api/auth/profile"),
-  refreshToken: (refreshToken: string) =>
-    api.post<LoginResponse>("/api/auth/refresh", { refreshToken }),
+  refreshToken: () =>
+    fetch("/api/auth/set-tokens", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "refresh" }),
+    }).then((res) => {
+      if (!res.ok) throw new Error("Refresh failed");
+      return res.json() as Promise<LoginResponse>;
+    }),
+  register: (email: string, password: string, role: string) =>
+    api.post("/api/auth/register", { email, password, role }),
 };
 
 // Employees
@@ -92,7 +94,8 @@ export const employeeApi = {
 export const departmentApi = {
   getAll: () => api.get<Department[]>("/api/departments"),
   create: (name: string) => api.post<Department>("/api/departments", { name }),
-  update: (id: number, name: string) => api.put<Department>(`/api/departments/${id}`, { name }),
+  update: (id: number, name: string) =>
+    api.put<Department>(`/api/departments/${id}`, { name }),
   delete: (id: number) => api.delete(`/api/departments/${id}`),
 };
 

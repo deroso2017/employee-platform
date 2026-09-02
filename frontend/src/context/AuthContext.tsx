@@ -1,11 +1,17 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
 import {
-  clearTokens,
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
+import {
+  setAccessToken,
+  clearAccessToken,
+  persistRefreshToken,
   getCurrentUser,
-  getRefreshToken,
-  setTokens,
 } from "@/lib/auth";
 import { authApi } from "@/lib/api";
 import type { User } from "@/lib/types";
@@ -16,7 +22,6 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  refreshToken: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -26,47 +31,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  // On mount: try to restore session by silently refreshing via httpOnly cookie
   useEffect(() => {
-    setUser(getCurrentUser());
-    setLoading(false);
+    (async () => {
+      try {
+        // The httpOnly cookie is sent automatically by the browser
+        const data = await authApi.refreshToken();
+        setAccessToken(data.accessToken);
+        await persistRefreshToken(data.refreshToken);
+        setUser(getCurrentUser());
+      } catch {
+        // No valid session — user needs to log in
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
-  async function login(email: string, password: string) {
-    const { data } = await authApi.login(email, password);
-    setTokens(data.accessToken, data.refreshToken);
-    setUser(getCurrentUser());
-    router.push("/dashboard");
-  }
+  useEffect(() => {
+    const handler = () => {
+      if (loading) return;
+      setUser(null);
+      router.push("/login");
+    };
+    window.addEventListener("auth:logout", handler);
+    return () => window.removeEventListener("auth:logout", handler);
+  }, [router, loading]);
 
-  async function logout() {
-    const refreshToken = getRefreshToken();
-    if (refreshToken) {
-      try {
-        await authApi.logout(refreshToken);
-      } catch {}
+  const login = useCallback(
+    async (email: string, password: string) => {
+      const { data } = await authApi.login(email, password);
+      setAccessToken(data.accessToken);
+      await persistRefreshToken(data.refreshToken);
+      setUser(getCurrentUser());
+      router.push("/dashboard");
+    },
+    [router],
+  );
+
+  const logout = useCallback(async () => {
+    try {
+      await authApi.logout();
+    } catch {
+      /* best-effort */
     }
-    clearTokens();
+    clearAccessToken();
     setUser(null);
     router.push("/login");
-  }
-
-  async function refreshToken() {
-    try {
-      const refreshToken = getRefreshToken();
-      if (!refreshToken) throw new Error("No refresh token");
-      const { data } = await authApi.refreshToken(refreshToken);
-      setTokens(data.accessToken, data.refreshToken);
-      setUser(getCurrentUser());
-    } catch (err) {
-      console.error("Failed to refresh token", err);
-      logout();
-    }
-  }
+  }, [router]);
 
   return (
-    <AuthContext.Provider
-      value={{ user, loading, login, logout, refreshToken }}
-    >
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

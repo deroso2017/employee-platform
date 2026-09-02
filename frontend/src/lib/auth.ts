@@ -1,9 +1,5 @@
-import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
-import { Role, User } from "./types";
-
-const ACCESS_TOKEN_KEY = "access_token";
-const REFRESH_TOKEN_KEY = "refresh_token";
+import type { Role, User } from "./types";
 
 interface JwtPayload {
   sub: string;
@@ -12,39 +8,54 @@ interface JwtPayload {
   exp: number;
 }
 
-export function setTokens(accessToken: string, refreshToken: string) {
-  Cookies.set(ACCESS_TOKEN_KEY, accessToken, { expires: 1 });
-  Cookies.set(REFRESH_TOKEN_KEY, refreshToken, { expires: 7 });
+// In-memory only — never touches localStorage or document.cookie
+let accessToken: string | null = null;
+
+export function setAccessToken(token: string) {
+  accessToken = token;
 }
 
-export function getAccessToken() {
-  return Cookies.get(ACCESS_TOKEN_KEY);
+export function getAccessToken(): string | null {
+  return accessToken;
 }
 
-export function getRefreshToken() {
-  return Cookies.get(REFRESH_TOKEN_KEY);
+export function clearAccessToken() {
+  accessToken = null;
 }
 
-export function clearTokens() {
-  Cookies.remove(ACCESS_TOKEN_KEY);
-  Cookies.remove(REFRESH_TOKEN_KEY);
+// Refresh token is set server-side via /api/auth/set-tokens
+// This client function just calls the route handler
+export async function persistRefreshToken(refreshToken: string) {
+  await fetch("/api/auth/set-tokens", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refreshToken }),
+  });
+}
+
+export async function clearRefreshToken() {
+  await fetch("/api/auth/set-tokens", { method: "DELETE" });
 }
 
 export function getCurrentUser(): User | null {
-  const token = getAccessToken();
-  if (!token) return null;
+  if (!accessToken) return null;
   try {
-    const payload = jwtDecode<JwtPayload>(token);
+    const payload = jwtDecode<JwtPayload>(accessToken);
+    if (payload.exp * 1000 < Date.now()) return null; // expired
     const role =
-      payload.role ??
-      (payload.authorities?.[0] as Role) ??
-      "EMPLOYEE";
+      payload.role ?? (payload.authorities?.[0] as Role) ?? "EMPLOYEE";
     return { id: 0, email: payload.sub, role };
   } catch {
     return null;
   }
 }
 
-export function isAuthenticated() {
-  return !!getAccessToken();
+export function isAccessTokenExpired(): boolean {
+  if (!accessToken) return true;
+  try {
+    const { exp } = jwtDecode<JwtPayload>(accessToken);
+    return exp * 1000 < Date.now();
+  } catch {
+    return true;
+  }
 }

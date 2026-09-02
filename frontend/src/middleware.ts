@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export function middleware(request: NextRequest) {
-  const token = request.cookies.get("access_token")?.value;
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-
   const publicPaths = ["/login", "/register"];
-  if (publicPaths.includes(pathname)) {
-    if (token) return NextResponse.redirect(new URL("/dashboard", request.url));
-    return NextResponse.next();
-  }
 
-  if (!token) {
+  if (publicPaths.includes(pathname)) return NextResponse.next();
+
+  const refreshCookie = request.cookies.get("refresh_token")?.value;
+  if (!refreshCookie) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
