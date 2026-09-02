@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 
 export default function DepartmentsPage() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
   const [departments, setDepartments] = useState<Department[]>([]);
   const [name, setName] = useState("");
@@ -26,8 +26,9 @@ export default function DepartmentsPage() {
   }, [user, router]);
 
   useEffect(() => {
+    if (loading) return;
     departmentApi.getAll().then(({ data }) => setDepartments(data));
-  }, []);
+  }, [loading]);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();

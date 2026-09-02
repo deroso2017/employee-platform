@@ -35,6 +35,7 @@ export default function DashboardPage() {
   const fetchRef = useRef<() => void>(() => {});
 
   useEffect(() => {
+    if (loading) return;
     let cancelled = false;
     async function fetchEmployees() {
       setLoading(true);
@@ -53,7 +54,7 @@ export default function DashboardPage() {
     fetchRef.current = fetchEmployees;
     fetchEmployees();
     return () => { cancelled = true; };
-  }, [page, query]);
+  }, [page, query, loading]);
 
   function fetchEmployees() { fetchRef.current(); }
 
