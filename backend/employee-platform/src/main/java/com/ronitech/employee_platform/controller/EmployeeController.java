@@ -7,7 +7,6 @@ import com.ronitech.employee_platform.service.EmployeeService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -99,7 +98,7 @@ public class EmployeeController {
     }
 
     @Operation(summary = "Upload profile image")
-    @RequestBody(content = @Content(mediaType = "multipart/form-data"))
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(mediaType = "multipart/form-data"))
     @PostMapping(value = "/{id}/profile-image", consumes = "multipart/form-data")
     public EmployeeResponse uploadProfileImage(
             @PathVariable Long id,
