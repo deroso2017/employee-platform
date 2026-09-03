@@ -1,49 +1,87 @@
 import axios from "axios";
-import { getAccessToken, setAccessToken } from "./auth";
+import {
+  clearAccessToken,
+  getAccessToken,
+  isAccessTokenExpired,
+  setAccessToken,
+} from "./auth";
 import type { Department, Employee, LoginResponse, Page, User } from "./types";
 
 const api = axios.create({
   baseURL: "",
 });
 
-api.interceptors.request.use((config) => {
-  const token = getAccessToken();
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+let refreshPromise: Promise<string> | null = null;
+
+function doRefresh(): Promise<string> {
+  if (!refreshPromise) {
+    refreshPromise = fetch("/api/auth/set-tokens", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "refresh" }),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Refresh failed");
+        return res.json() as Promise<LoginResponse>;
+      })
+      .then((data) => {
+        setAccessToken(data.accessToken);
+        return data.accessToken;
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+  return refreshPromise;
+}
+
+// Proactively refresh if the access token is expired before sending the request,
+// instead of waiting for a 401 to come back from the server.
+// Skip public auth endpoints — they don't need a token and have no session to refresh.
+const PUBLIC_PATHS = ["/api/auth/login", "/api/auth/register", "/api/auth/refresh", "/api/auth/forgot-password", "/api/auth/reset-password"];
+
+api.interceptors.request.use(async (config) => {
+  const url = config.url ?? "";
+  if (PUBLIC_PATHS.some((path) => url.includes(path))) {
+    return config;
+  }
+
+  if (isAccessTokenExpired()) {
+    try {
+      const newToken = await doRefresh();
+      config.headers.Authorization = `Bearer ${newToken}`;
+    } catch {
+      // Refresh token is also invalid/expired — session is dead.
+      // Notify AuthContext to clear state and redirect to /login.
+      clearAccessToken();
+      window.dispatchEvent(new Event("auth:logout"));
+      return Promise.reject(new Error("Session expired"));
+    }
+  } else {
+    const token = getAccessToken();
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+  }
   return config;
 });
 
-let refreshPromise: Promise<string> | null = null;
-
+// Reactive fallback: handles 401s that slip through (e.g. server-side
+// invalidation, clock skew) — reuses the same refreshPromise to avoid
+// duplicate refresh calls during concurrent requests.
 api.interceptors.response.use(
   (res) => res,
   async (error) => {
     const original = error.config;
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true;
-
-      if (!refreshPromise) {
-        refreshPromise = fetch("/api/auth/set-tokens", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "refresh" }),
-        })
-          .then((res) => {
-            if (!res.ok) throw new Error("Refresh failed");
-            return res.json() as Promise<LoginResponse>;
-          })
-          .then((data) => {
-            setAccessToken(data.accessToken);
-            return data.accessToken;
-          })
-          .finally(() => {
-            refreshPromise = null;
-          });
-      }
       try {
-        const newToken = await refreshPromise;
+        const newToken = await doRefresh();
         original.headers.Authorization = `Bearer ${newToken}`;
         return api(original);
       } catch {
+        // Both the original request and the refresh attempt failed —
+        // session is unrecoverable, redirect to /login.
+        clearAccessToken();
+        window.dispatchEvent(new Event("auth:logout"));
         return Promise.reject(error);
       }
     }
