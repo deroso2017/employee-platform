@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { departmentApi } from "@/lib/api";
 import type { Department } from "@/lib/types";
 import { useAuth } from "@/context/AuthContext";
@@ -14,35 +15,85 @@ import { toast } from "@/components/ui/toast";
 export default function DepartmentsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [departments, setDepartments] = useState<Department[]>([]);
+  const queryClient = useQueryClient();
+
   const [name, setName] = useState("");
-  const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editName, setEditName] = useState("");
-  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (user && user.role !== "ADMIN") router.push("/dashboard");
   }, [user, router]);
 
-  useEffect(() => {
-    if (loading) return;
-    departmentApi.getAll().then(({ data }) => setDepartments(data));
-  }, [loading]);
+  const { data: departments = [], isLoading } = useQuery({
+    queryKey: ["departments"],
+    enabled: !loading,
+    queryFn: async () => {
+      const res = await departmentApi.getAll();
+      console.log("Fetched departments:", res.data);
+      return res.data;
+    },
+  });
 
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault();
-    setCreating(true);
-    try {
-      const { data } = await departmentApi.create(name);
-      setDepartments((prev) => [...prev, data]);
+  const createMutation = useMutation({
+    mutationFn: (newName: string) => departmentApi.create(newName),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ["departments"] });
       setName("");
-      toast.add({ title: "Department created", description: `"${data.name}" was added successfully.`, type: "success" });
-    } catch {
-      toast.add({ title: "Error", description: "Failed to create department.", type: "error" });
-    } finally {
-      setCreating(false);
-    }
+      toast.add({
+        title: "Department created",
+        description: `"${res.data.name}" was added successfully.`,
+        type: "success",
+      });
+    },
+    onError: () => {
+      toast.add({
+        title: "Error",
+        description: "Failed to create department.",
+        type: "error",
+      });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, newName }: { id: number; newName: string }) =>
+      departmentApi.update(id, newName),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ["departments"] });
+      setEditingId(null);
+      toast.add({
+        title: "Department updated",
+        description: `"${res.data.name}" was saved.`,
+        type: "success",
+      });
+    },
+    onError: () => {
+      toast.add({
+        title: "Error",
+        description: "Failed to update department.",
+        type: "error",
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => departmentApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["departments"] });
+      toast.add({ title: "Department deleted", type: "success" });
+    },
+    onError: () => {
+      toast.add({
+        title: "Error",
+        description: "Failed to delete department.",
+        type: "error",
+      });
+    },
+  });
+
+  function handleCreate(e: React.SubmitEvent) {
+    e.preventDefault();
+    createMutation.mutate(name);
   }
 
   function startEdit(dept: Department) {
@@ -50,29 +101,9 @@ export default function DepartmentsPage() {
     setEditName(dept.name);
   }
 
-  async function handleUpdate(id: number) {
-    setSaving(true);
-    try {
-      const { data } = await departmentApi.update(id, editName);
-      setDepartments((prev) => prev.map((d) => (d.id === id ? data : d)));
-      setEditingId(null);
-      toast.add({ title: "Department updated", description: `"${data.name}" was saved.`, type: "success" });
-    } catch {
-      toast.add({ title: "Error", description: "Failed to update department.", type: "error" });
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleDelete(id: number) {
+  function handleDelete(id: number) {
     if (!confirm("Delete this department?")) return;
-    try {
-      await departmentApi.delete(id);
-      setDepartments((prev) => prev.filter((d) => d.id !== id));
-      toast.add({ title: "Department deleted", type: "success" });
-    } catch {
-      toast.add({ title: "Error", description: "Failed to delete department.", type: "error" });
-    }
+    deleteMutation.mutate(id);
   }
 
   return (
@@ -95,8 +126,12 @@ export default function DepartmentsPage() {
                   placeholder="e.g. Engineering"
                   required
                 />
-                <Button type="submit" disabled={creating} className="w-full">
-                  {creating ? "Creating…" : "Create"}
+                <Button
+                  type="submit"
+                  disabled={createMutation.isPending}
+                  className="w-full"
+                >
+                  {createMutation.isPending ? "Creating…" : "Create"}
                 </Button>
               </form>
             </CardContent>
@@ -104,14 +139,21 @@ export default function DepartmentsPage() {
 
           {/* Department list */}
           <div className="lg:col-span-2">
-            {departments.length === 0 ? (
+            {isLoading ? (
+              <div className="flex items-center justify-center h-40 text-muted-foreground text-sm">
+                Loading…
+              </div>
+            ) : departments.length === 0 ? (
               <div className="flex items-center justify-center h-40 rounded-xl border border-dashed text-muted-foreground text-sm">
                 No departments yet. Create one to get started.
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {departments.map((dept) => (
-                  <Card key={dept.id} className="group transition-shadow hover:shadow-md">
+                  <Card
+                    key={dept.id}
+                    className="group transition-shadow hover:shadow-md"
+                  >
                     <CardContent className="pt-5 pb-4 px-5">
                       {editingId === dept.id ? (
                         <div className="flex gap-2">
@@ -123,10 +165,15 @@ export default function DepartmentsPage() {
                           />
                           <Button
                             size="sm"
-                            disabled={saving}
-                            onClick={() => handleUpdate(dept.id)}
+                            disabled={updateMutation.isPending}
+                            onClick={() =>
+                              updateMutation.mutate({
+                                id: dept.id,
+                                newName: editName,
+                              })
+                            }
                           >
-                            {saving ? "…" : "Save"}
+                            {updateMutation.isPending ? "…" : "Save"}
                           </Button>
                           <Button
                             size="sm"
@@ -157,6 +204,7 @@ export default function DepartmentsPage() {
                               size="sm"
                               variant="ghost"
                               className="h-8 px-2 text-destructive hover:text-destructive"
+                              disabled={deleteMutation.isPending}
                               onClick={() => handleDelete(dept.id)}
                             >
                               Delete
