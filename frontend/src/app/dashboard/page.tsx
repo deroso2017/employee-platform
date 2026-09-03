@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { employeeApi } from "@/lib/api";
 import type { Employee } from "@/lib/types";
 import { useAuth } from "@/context/AuthContext";
@@ -18,50 +19,45 @@ import {
 } from "@/components/ui/table";
 
 export default function DashboardPage() {
-  const { user } = useAuth();
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [totalPages, setTotalPages] = useState(0);
+  const { user, loading } = useAuth();
+  const queryClient = useQueryClient();
+
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Employee | null>(null);
-  const [loading, setLoading] = useState(true);
 
   const canCreate = user?.role === "ADMIN" || user?.role === "MANAGER";
   const canEdit = user?.role === "ADMIN";
   const canDelete = user?.role === "ADMIN";
 
-  const fetchRef = useRef<() => void>(() => {});
+  // Fetch employees with automatic caching and background refetching
+  const { data, isLoading } = useQuery({
+    queryKey: ["employees", page, query],
+    enabled: !loading, // wait for auth session to restore before fetching
+    queryFn: async () => {
+      const res = query
+        ? await employeeApi.search(query, page)
+        : await employeeApi.getAll(page);
+      return res.data;
+    },
+  });
 
-  useEffect(() => {
-    if (loading) return;
-    let cancelled = false;
-    async function fetchEmployees() {
-      setLoading(true);
-      try {
-        const { data } = query
-          ? await employeeApi.search(query, page)
-          : await employeeApi.getAll(page);
-        if (!cancelled) {
-          setEmployees(data.content);
-          setTotalPages(data.totalPages);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    fetchRef.current = fetchEmployees;
-    fetchEmployees();
-    return () => { cancelled = true; };
-  }, [page, query, loading]);
+  const employees = data?.content ?? [];
+  const totalPages = data?.totalPages ?? 0;
 
-  function fetchEmployees() { fetchRef.current(); }
+  // Delete mutation with automatic cache invalidation
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => employeeApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["employees"] });
+    },
+  });
 
   async function handleDelete(id: number) {
     if (!confirm("Delete this employee?")) return;
-    await employeeApi.delete(id);
-    fetchEmployees();
+    deleteMutation.mutate(id);
   }
 
   function openCreate() {
@@ -86,9 +82,7 @@ export default function DashboardPage() {
       <main className="max-w-6xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-semibold">Employees</h1>
-          {canCreate && (
-            <Button onClick={openCreate}>Add Employee</Button>
-          )}
+          {canCreate && <Button onClick={openCreate}>Add Employee</Button>}
         </div>
 
         <form onSubmit={handleSearch} className="flex gap-2 mb-6">
@@ -98,12 +92,18 @@ export default function DashboardPage() {
             onChange={(e) => setSearch(e.target.value)}
             className="max-w-xs"
           />
-          <Button type="submit" variant="secondary">Search</Button>
+          <Button type="submit" variant="secondary">
+            Search
+          </Button>
           {query && (
             <Button
               type="button"
               variant="ghost"
-              onClick={() => { setSearch(""); setQuery(""); setPage(0); }}
+              onClick={() => {
+                setSearch("");
+                setQuery("");
+                setPage(0);
+              }}
             >
               Clear
             </Button>
@@ -117,33 +117,47 @@ export default function DashboardPage() {
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Department</TableHead>
-                {(canEdit || canDelete) && <TableHead className="w-32">Actions</TableHead>}
+                {(canEdit || canDelete) && (
+                  <TableHead className="w-32">Actions</TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? (
+              {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                  <TableCell
+                    colSpan={4}
+                    className="text-center py-8 text-muted-foreground"
+                  >
                     Loading…
                   </TableCell>
                 </TableRow>
               ) : employees.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                  <TableCell
+                    colSpan={4}
+                    className="text-center py-8 text-muted-foreground"
+                  >
                     No employees found.
                   </TableCell>
                 </TableRow>
               ) : (
                 employees.map((emp) => (
                   <TableRow key={emp.id}>
-                    <TableCell>{emp.firstName} {emp.lastName}</TableCell>
+                    <TableCell>
+                      {emp.firstName} {emp.lastName}
+                    </TableCell>
                     <TableCell>{emp.email}</TableCell>
                     <TableCell>{emp.department?.name ?? "—"}</TableCell>
                     {(canEdit || canDelete) && (
                       <TableCell>
                         <div className="flex gap-2">
                           {canEdit && (
-                            <Button size="sm" variant="outline" onClick={() => openEdit(emp)}>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openEdit(emp)}
+                            >
                               Edit
                             </Button>
                           )}
@@ -194,7 +208,9 @@ export default function DashboardPage() {
       <EmployeeFormDialog
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
-        onSaved={fetchEmployees}
+        onSaved={() => {
+          queryClient.invalidateQueries({ queryKey: ["employees"] });
+        }}
         employee={editing}
       />
     </div>
