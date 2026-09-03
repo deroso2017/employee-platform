@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation";
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  authInitialized: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -29,6 +30,10 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  // Tracks whether the initial session restore has completed.
+  // Used by the Axios interceptor to avoid dispatching auth:logout
+  // before AuthContext has had a chance to load the access token.
+  const [authInitialized, setAuthInitialized] = useState(false);
   const router = useRouter();
 
   // On mount: try to restore session by silently refreshing via httpOnly cookie
@@ -43,6 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch {
         // No valid session — user needs to log in
       } finally {
+        setAuthInitialized(true);
         setLoading(false);
       }
     })();
@@ -81,7 +87,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider
+      value={{ user, loading, authInitialized, login, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -6,6 +6,7 @@ import {
   setAccessToken,
 } from "./auth";
 import type { Department, Employee, LoginResponse, Page, User } from "./types";
+import { useAuth } from "@/context/AuthContext";
 
 const api = axios.create({
   baseURL: "",
@@ -53,15 +54,18 @@ api.interceptors.request.use(async (config) => {
   }
 
   if (isAccessTokenExpired()) {
+    const { authInitialized } = useAuth();
     try {
       const newToken = await doRefresh();
       config.headers.Authorization = `Bearer ${newToken}`;
     } catch {
-      // Refresh token is also invalid/expired — session is dead.
-      // Notify AuthContext to clear state and redirect to /login.
-      clearAccessToken();
-      window.dispatchEvent(new Event("auth:logout"));
-      return Promise.reject(new Error("Session expired"));
+      // Only treat this as a dead session if auth has already initialized.
+      // During startup, the token is simply not loaded yet — not expired.
+      if (authInitialized) {
+        clearAccessToken();
+        window.dispatchEvent(new Event("auth:logout"));
+        return Promise.reject(new Error("Session expired"));
+      }
     }
   } else {
     const token = getAccessToken();
