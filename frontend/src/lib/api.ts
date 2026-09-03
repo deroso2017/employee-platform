@@ -38,7 +38,13 @@ function doRefresh(): Promise<string> {
 // Proactively refresh if the access token is expired before sending the request,
 // instead of waiting for a 401 to come back from the server.
 // Skip public auth endpoints — they don't need a token and have no session to refresh.
-const PUBLIC_PATHS = ["/api/auth/login", "/api/auth/register", "/api/auth/refresh", "/api/auth/forgot-password", "/api/auth/reset-password"];
+const PUBLIC_PATHS = [
+  "/api/auth/login",
+  "/api/auth/register",
+  "/api/auth/refresh",
+  "/api/auth/forgot-password",
+  "/api/auth/reset-password",
+];
 
 api.interceptors.request.use(async (config) => {
   const url = config.url ?? "";
@@ -104,8 +110,8 @@ export const authApi = {
       if (!res.ok) throw new Error("Refresh failed");
       return res.json() as Promise<LoginResponse>;
     }),
-  register: (email: string, password: string, role: string) =>
-    api.post("/api/auth/register", { email, password, role }),
+  register: (email: string, password: string) =>
+    api.post("/api/auth/register", { email, password }),
 };
 
 // Employees
