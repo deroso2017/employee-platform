@@ -33,7 +33,11 @@ function EmployeeAvatar({ employee }: { employee: Employee }) {
   return (
     <div className="relative w-9 h-9 rounded-full overflow-hidden border bg-muted shrink-0">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt={`${employee.firstName} ${employee.lastName}`} className="w-full h-full object-cover" />
+      <img
+        src={src}
+        alt={`${employee.firstName} ${employee.lastName}`}
+        className="w-full h-full object-cover"
+      />
     </div>
   );
 }

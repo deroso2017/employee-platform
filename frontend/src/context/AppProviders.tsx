@@ -3,10 +3,9 @@
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/context/AuthContext";
+import GlobalErrorBoundary from "@/components/GlobalErrorBoundary";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
-  // useState ensures a single QueryClient instance per browser session,
-  // not shared across requests on the server.
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -20,8 +19,10 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>{children}</AuthProvider>
-    </QueryClientProvider>
+    <GlobalErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>{children}</AuthProvider>
+      </QueryClientProvider>
+    </GlobalErrorBoundary>
   );
 }
