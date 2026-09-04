@@ -19,6 +19,25 @@ import {
 } from "@/components/ui/table";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 
+import { useProfileImage } from "@/lib/hooks/useProfileImage";
+
+const DEFAULT_AVATAR = "/default-avatar.svg";
+
+function EmployeeAvatar({ employee }: { employee: Employee }) {
+  const apiSrc = employee.profileImage
+    ? employeeApi.profileImageUrl(employee.id)
+    : null;
+  const blobUrl = useProfileImage(apiSrc);
+  const src = blobUrl ?? DEFAULT_AVATAR;
+
+  return (
+    <div className="relative w-9 h-9 rounded-full overflow-hidden border bg-muted shrink-0">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt={`${employee.firstName} ${employee.lastName}`} className="w-full h-full object-cover" />
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const { user, loading } = useAuth();
   const queryClient = useQueryClient();
@@ -109,6 +128,7 @@ export default function DashboardPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12"></TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Department</TableHead>
@@ -121,7 +141,7 @@ export default function DashboardPage() {
               {isLoading ? (
                 <TableRow>
                   <TableCell
-                    colSpan={4}
+                    colSpan={5}
                     className="text-center py-8 text-muted-foreground"
                   >
                     Loading…
@@ -130,7 +150,7 @@ export default function DashboardPage() {
               ) : employees.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={4}
+                    colSpan={5}
                     className="text-center py-8 text-muted-foreground"
                   >
                     No employees found.
@@ -139,6 +159,9 @@ export default function DashboardPage() {
               ) : (
                 employees.map((emp) => (
                   <TableRow key={emp.id}>
+                    <TableCell>
+                      <EmployeeAvatar employee={emp} />
+                    </TableCell>
                     <TableCell>
                       {emp.firstName} {emp.lastName}
                     </TableCell>

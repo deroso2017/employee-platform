@@ -136,6 +136,15 @@ export const employeeApi = {
     api.put<Employee>(
       `/api/employees/${employeeId}/department/${departmentId}`,
     ),
+  uploadProfileImage: (employeeId: number, file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return api.post<Employee>(`/api/employees/${employeeId}/profile-image`, form, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+  profileImageUrl: (employeeId: number) =>
+    `/api/employees/${employeeId}/profile-image`,
 };
 
 // Departments

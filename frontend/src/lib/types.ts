@@ -26,6 +26,7 @@ export interface Employee {
   lastName: string;
   email: string;
   phone?: string;
+  profileImage?: string | null;
   department?: Department;
 }
 
