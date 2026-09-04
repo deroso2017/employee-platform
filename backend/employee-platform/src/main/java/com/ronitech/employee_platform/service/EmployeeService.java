@@ -220,6 +220,8 @@ public class EmployeeService {
                                 "Profile image uploaded successfully for employee {}",
                                 employeeId);
 
+                redisTemplate.delete(employeeCacheKey(employeeId));
+
                 return mapper.toResponse(savedEmployee);
         }
 
