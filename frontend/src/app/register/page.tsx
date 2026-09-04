@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { registerSchema, type RegisterFormValues } from "@/lib/schemas";
 import { authApi } from "@/lib/api";
 import { persistRefreshToken, setAccessToken } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,20 +16,22 @@ import { Eye, EyeOff } from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [serverError, setServerError] = useState("");
 
-  async function handleSubmit(e: React.SubmitEvent) {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+  });
+
+  async function onSubmit(values: RegisterFormValues) {
+    setServerError("");
     try {
-      await authApi.register(email, password);
-      // auto-login after register
-      const { data } = await authApi.login(email, password);
+      await authApi.register(values.email, values.password);
+      const { data } = await authApi.login(values.email, values.password);
       setAccessToken(data.accessToken);
       await persistRefreshToken(data.refreshToken);
       router.push("/dashboard");
@@ -37,9 +42,7 @@ export default function RegisterPage() {
         const d = data as Record<string, string>;
         msg = d.message ?? Object.values(d).join(", ") ?? msg;
       }
-      setError(msg);
-    } finally {
-      setLoading(false);
+      setServerError(msg);
     }
   }
 
@@ -50,16 +53,18 @@ export default function RegisterPage() {
           <CardTitle className="text-2xl">Create account</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-1">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
+                aria-invalid={!!errors.email}
+                {...register("email")}
               />
+              {errors.email && (
+                <p className="text-sm text-destructive">{errors.email.message}</p>
+              )}
             </div>
             <div className="space-y-1">
               <Label htmlFor="password">Password</Label>
@@ -67,10 +72,9 @@ export default function RegisterPage() {
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
                   className="pr-10"
-                  required
+                  aria-invalid={!!errors.password}
+                  {...register("password")}
                 />
                 <button
                   type="button"
@@ -78,21 +82,16 @@ export default function RegisterPage() {
                   className="absolute right-0 top-0 h-full px-3 py-2 text-muted-foreground hover:text-foreground focus:outline-none transition-colors cursor-pointer"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              {errors.password && (
+                <p className="text-sm text-destructive">{errors.password.message}</p>
+              )}
             </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button
-              type="submit"
-              className="w-full cursor-pointer"
-              disabled={loading}
-            >
-              {loading ? "Creating…" : "Create account"}
+            {serverError && <p className="text-sm text-destructive">{serverError}</p>}
+            <Button type="submit" className="w-full cursor-pointer" disabled={isSubmitting}>
+              {isSubmitting ? "Creating…" : "Create account"}
             </Button>
             <p className="text-sm text-center text-muted-foreground">
               Already have an account?{" "}
