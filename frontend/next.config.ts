@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const isDev = process.env.NODE_ENV === "development";
 
 const backendUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+const parsedBackendUrl = new URL(backendUrl);
 
 const csp = [
   `default-src 'self'`,
@@ -45,6 +46,18 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: parsedBackendUrl.protocol.replace(":", "") as
+          | "http"
+          | "https",
+        hostname: parsedBackendUrl.hostname,
+        port: parsedBackendUrl.port,
+        pathname: "/api/employees/*/profile-image",
+      },
+    ],
+  },
   async headers() {
     return [
       {
