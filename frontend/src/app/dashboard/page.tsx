@@ -17,6 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useDebounce } from "@/lib/hooks/useDebounce";
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
@@ -24,7 +25,8 @@ export default function DashboardPage() {
 
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
-  const [query, setQuery] = useState("");
+  const debouncedSearch = useDebounce(search, 400);
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Employee | null>(null);
 
@@ -34,11 +36,11 @@ export default function DashboardPage() {
 
   // Fetch employees with automatic caching and background refetching
   const { data, isLoading } = useQuery({
-    queryKey: ["employees", page, query],
+    queryKey: ["employees", page, debouncedSearch],
     enabled: !loading, // wait for auth session to restore before fetching
     queryFn: async () => {
-      const res = query
-        ? await employeeApi.search(query, page)
+      const res = debouncedSearch
+        ? await employeeApi.search(debouncedSearch, page)
         : await employeeApi.getAll(page);
       return res.data;
     },
@@ -55,6 +57,16 @@ export default function DashboardPage() {
     },
   });
 
+  function handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setSearch(e.target.value);
+    setPage(0); // reset to first page on every new search
+  }
+
+  function handleClear() {
+    setSearch("");
+    setPage(0);
+  }
+
   async function handleDelete(id: number) {
     if (!confirm("Delete this employee?")) return;
     deleteMutation.mutate(id);
@@ -70,12 +82,6 @@ export default function DashboardPage() {
     setDialogOpen(true);
   }
 
-  function handleSearch(e: React.FormEvent) {
-    e.preventDefault();
-    setPage(0);
-    setQuery(search);
-  }
-
   return (
     <div className="min-h-screen bg-muted/20">
       <Navbar />
@@ -85,30 +91,19 @@ export default function DashboardPage() {
           {canCreate && <Button onClick={openCreate}>Add Employee</Button>}
         </div>
 
-        <form onSubmit={handleSearch} className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-6">
           <Input
             placeholder="Search by name…"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={handleSearchChange}
             className="max-w-xs"
           />
-          <Button type="submit" variant="secondary">
-            Search
-          </Button>
-          {query && (
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => {
-                setSearch("");
-                setQuery("");
-                setPage(0);
-              }}
-            >
+          {search && (
+            <Button type="button" variant="ghost" onClick={handleClear}>
               Clear
             </Button>
           )}
-        </form>
+        </div>
 
         <div className="rounded-lg border bg-background">
           <Table>
