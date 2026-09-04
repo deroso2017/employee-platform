@@ -76,7 +76,9 @@ class EmployeeServiceTest {
                                 1L,
                                 "John",
                                 "Doe",
-                                "john@test.com");
+                                "john@test.com",
+                                null,
+                                null);
 
                 when(mapper.toEntity(request))
                                 .thenReturn(employee);
@@ -187,7 +189,9 @@ class EmployeeServiceTest {
                                 id,
                                 "Jane",
                                 "Smith",
-                                "jane@test.com");
+                                "jane@test.com",
+                                null,
+                                null);
 
                 when(employeeRepository.findById(id))
                                 .thenReturn(Optional.of(employee));
