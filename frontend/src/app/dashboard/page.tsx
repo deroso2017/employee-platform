@@ -20,6 +20,7 @@ import {
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { toast } from "@/components/ui/toast";
 import { extractErrorMessage } from "@/lib/errors";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 import { useProfileImage } from "@/lib/hooks/useProfileImage";
 
@@ -55,6 +56,11 @@ export default function DashboardPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Employee | null>(null);
 
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(
+    null,
+  );
+
   const canCreate = user?.role === "ADMIN" || user?.role === "MANAGER";
   const canEdit = user?.role === "ADMIN";
   const canDelete = user?.role === "ADMIN";
@@ -79,7 +85,14 @@ export default function DashboardPage() {
     mutationFn: (id: number) => employeeApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
-      toast.add({ title: "Employee deleted", type: "success" });
+
+      setDeleteDialogOpen(false);
+      setEmployeeToDelete(null);
+
+      toast.add({
+        title: "Employee deleted",
+        type: "success",
+      });
     },
     onError: (err) => {
       toast.add({
@@ -100,9 +113,15 @@ export default function DashboardPage() {
     setPage(0);
   }
 
-  async function handleDelete(id: number) {
-    if (!confirm("Delete this employee?")) return;
-    deleteMutation.mutate(id);
+  function handleDelete(employee: Employee) {
+    setEmployeeToDelete(employee);
+    setDeleteDialogOpen(true);
+  }
+
+  function confirmDelete() {
+    if (!employeeToDelete) return;
+
+    deleteMutation.mutate(employeeToDelete.id);
   }
 
   function openCreate() {
@@ -197,7 +216,7 @@ export default function DashboardPage() {
                             <Button
                               size="sm"
                               variant="destructive"
-                              onClick={() => handleDelete(emp.id)}
+                              onClick={() => handleDelete(emp)}
                             >
                               Delete
                             </Button>
@@ -244,6 +263,20 @@ export default function DashboardPage() {
           queryClient.invalidateQueries({ queryKey: ["employees"] });
         }}
         employee={editing}
+      />
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete employee?"
+        description={
+          employeeToDelete
+            ? `Are you sure you want to delete ${employeeToDelete.firstName} ${employeeToDelete.lastName}? This action cannot be undone.`
+            : undefined
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        loading={deleteMutation.isPending}
+        onConfirm={confirmDelete}
       />
     </div>
   );
