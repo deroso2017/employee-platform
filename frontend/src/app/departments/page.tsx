@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 import { extractErrorMessage } from "@/lib/errors";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export default function DepartmentsPage() {
   const { loading } = useAuth();
@@ -19,6 +20,10 @@ export default function DepartmentsPage() {
   const [name, setName] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editName, setEditName] = useState("");
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [departmentToDelete, setDepartmentToDelete] =
+    useState<Department | null>(null);
 
   const { data: departments = [], isLoading } = useQuery({
     queryKey: ["departments"],
@@ -74,6 +79,8 @@ export default function DepartmentsPage() {
     mutationFn: (id: number) => departmentApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["departments"] });
+      setDeleteDialogOpen(false);
+      setDepartmentToDelete(null);
       toast.add({ title: "Department deleted", type: "success" });
     },
     onError: (err) => {
@@ -95,9 +102,15 @@ export default function DepartmentsPage() {
     setEditName(dept.name);
   }
 
-  function handleDelete(id: number) {
-    if (!confirm("Delete this department?")) return;
-    deleteMutation.mutate(id);
+  function handleDelete(department: Department) {
+    setDepartmentToDelete(department);
+    setDeleteDialogOpen(true);
+  }
+
+  function confirmDelete() {
+    if (!departmentToDelete) return;
+
+    deleteMutation.mutate(departmentToDelete.id);
   }
 
   return (
@@ -199,7 +212,7 @@ export default function DepartmentsPage() {
                               variant="ghost"
                               className="h-8 px-2 text-destructive hover:text-destructive"
                               disabled={deleteMutation.isPending}
-                              onClick={() => handleDelete(dept.id)}
+                              onClick={() => handleDelete(dept)}
                             >
                               Delete
                             </Button>
@@ -214,6 +227,20 @@ export default function DepartmentsPage() {
           </div>
         </div>
       </main>
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete department?"
+        description={
+          departmentToDelete
+            ? `Are you sure you want to delete ${departmentToDelete.name}? This action cannot be undone.`
+            : undefined
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        loading={deleteMutation.isPending}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }
