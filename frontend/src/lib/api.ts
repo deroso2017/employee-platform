@@ -124,7 +124,12 @@ export const employeeApi = {
     api.get<Page<Employee>>(`/api/employees?page=${page}&size=${size}`),
   getById: (id: number) => api.get<Employee>(`/api/employees/${id}`),
   search: (name: string, page = 0) =>
-    api.get<Page<Employee>>(`/api/employees/search?name=${name}&page=${page}`),
+    api.get<Page<Employee>>("/api/employees/search", {
+      params: {
+        name,
+        page,
+      },
+    }),
   create: (data: { firstName: string; lastName: string; email: string }) =>
     api.post<Employee>("/api/employees", data),
   update: (
@@ -139,9 +144,13 @@ export const employeeApi = {
   uploadProfileImage: (employeeId: number, file: File) => {
     const form = new FormData();
     form.append("file", file);
-    return api.post<Employee>(`/api/employees/${employeeId}/profile-image`, form, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    return api.post<Employee>(
+      `/api/employees/${employeeId}/profile-image`,
+      form,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      },
+    );
   },
   profileImageUrl: (employeeId: number) =>
     `/api/employees/${employeeId}/profile-image`,
