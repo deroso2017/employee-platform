@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
+import { extractErrorMessage } from "@/lib/errors";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -36,13 +37,7 @@ export default function RegisterPage() {
       await persistRefreshToken(data.refreshToken);
       router.push("/dashboard");
     } catch (err: unknown) {
-      const data = (err as { response?: { data?: unknown } })?.response?.data;
-      let msg = "Registration failed.";
-      if (data && typeof data === "object") {
-        const d = data as Record<string, string>;
-        msg = d.message ?? Object.values(d).join(", ") ?? msg;
-      }
-      setServerError(msg);
+      setServerError(extractErrorMessage(err, "Registration failed."));
     }
   }
 

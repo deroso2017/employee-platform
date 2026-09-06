@@ -18,6 +18,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useDebounce } from "@/lib/hooks/useDebounce";
+import { toast } from "@/components/ui/toast";
+import { extractErrorMessage } from "@/lib/errors";
 
 import { useProfileImage } from "@/lib/hooks/useProfileImage";
 
@@ -77,6 +79,14 @@ export default function DashboardPage() {
     mutationFn: (id: number) => employeeApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
+      toast.add({ title: "Employee deleted", type: "success" });
+    },
+    onError: (err) => {
+      toast.add({
+        title: "Failed to delete employee",
+        description: extractErrorMessage(err),
+        type: "error",
+      });
     },
   });
 

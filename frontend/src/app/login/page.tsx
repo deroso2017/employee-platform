@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
+import { extractErrorMessage } from "@/lib/errors";
 
 export default function LoginPage() {
   const { login, user, loading } = useAuth();
@@ -38,10 +39,7 @@ export default function LoginPage() {
     try {
       await login(values.email, values.password);
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message ?? "Invalid email or password.";
-      setServerError(msg);
+      setServerError(extractErrorMessage(err, "Invalid email or password."));
     }
   }
 

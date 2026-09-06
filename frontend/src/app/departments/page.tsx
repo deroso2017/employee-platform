@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
+import { extractErrorMessage } from "@/lib/errors";
 
 export default function DepartmentsPage() {
   const { user, loading } = useAuth();
@@ -46,10 +47,10 @@ export default function DepartmentsPage() {
         type: "success",
       });
     },
-    onError: () => {
+    onError: (err) => {
       toast.add({
         title: "Error",
-        description: "Failed to create department.",
+        description: extractErrorMessage(err, "Failed to create department."),
         type: "error",
       });
     },
@@ -67,10 +68,10 @@ export default function DepartmentsPage() {
         type: "success",
       });
     },
-    onError: () => {
+    onError: (err) => {
       toast.add({
         title: "Error",
-        description: "Failed to update department.",
+        description: extractErrorMessage(err, "Failed to update department."),
         type: "error",
       });
     },
@@ -82,10 +83,10 @@ export default function DepartmentsPage() {
       queryClient.invalidateQueries({ queryKey: ["departments"] });
       toast.add({ title: "Department deleted", type: "success" });
     },
-    onError: () => {
+    onError: (err) => {
       toast.add({
         title: "Error",
-        description: "Failed to delete department.",
+        description: extractErrorMessage(err, "Failed to delete department."),
         type: "error",
       });
     },

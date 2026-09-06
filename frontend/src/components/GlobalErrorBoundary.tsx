@@ -2,6 +2,7 @@
 
 import { Component, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import { extractErrorMessage } from "@/lib/errors";
 
 interface GlobalErrorBoundaryProps {
   children: ReactNode;
@@ -19,9 +20,7 @@ class GlobalErrorBoundary extends Component<GlobalErrorBoundaryProps, State> {
   }
 
   static getDerivedStateFromError(error: unknown): State {
-    const message =
-      error instanceof Error ? error.message : "An unexpected error occurred.";
-    return { hasError: true, message };
+    return { hasError: true, message: extractErrorMessage(error) };
   }
 
   componentDidCatch(error: unknown, info: { componentStack: string }) {

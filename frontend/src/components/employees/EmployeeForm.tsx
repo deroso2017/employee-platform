@@ -10,6 +10,7 @@ import { useProfileImage } from "@/lib/hooks/useProfileImage";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { extractErrorMessage } from "@/lib/errors";
 import {
   Select,
   SelectContent,
@@ -110,8 +111,8 @@ export function EmployeeForm({
 
       onSaved();
       onClose();
-    } catch {
-      setServerError("Failed to save employee.");
+    } catch (err) {
+      setServerError(extractErrorMessage(err, "Failed to save employee."));
     }
   }
 
