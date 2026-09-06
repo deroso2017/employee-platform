@@ -1,5 +1,39 @@
 import { NextRequest, NextResponse } from "next/server";
+import { jwtDecode } from "jwt-decode";
 import type { LoginResponse } from "@/lib/types";
+import type { Role } from "@/lib/types";
+
+interface AccessTokenPayload {
+  sub: string;
+  role?: Role;
+  authorities?: string[];
+}
+
+/** Decode role from an access token without verifying the signature. */
+function extractRole(accessToken: string): Role {
+  try {
+    const payload = jwtDecode<AccessTokenPayload>(accessToken);
+    return payload.role ?? (payload.authorities?.[0] as Role) ?? "EMPLOYEE";
+  } catch {
+    return "EMPLOYEE";
+  }
+}
+
+const ROLE_COOKIE = "role";
+
+function setRoleCookie(response: NextResponse, role: Role) {
+  response.cookies.set(ROLE_COOKIE, role, {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 60 * 60 * 24 * 30,
+    path: "/",
+  });
+}
+
+function clearRoleCookie(response: NextResponse) {
+  response.cookies.delete(ROLE_COOKIE);
+}
 
 const APP_ORIGIN = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
@@ -32,15 +66,23 @@ export async function POST(req: NextRequest) {
   // If called with { action: 'refresh' }, proxy the refresh token to the backend
   if (body.action === "refresh") {
     const refreshToken = req.cookies.get("refresh_token")?.value;
-    if (!refreshToken) return NextResponse.json({ error: "No refresh token" }, { status: 401 });
+    if (!refreshToken)
+      return NextResponse.json({ error: "No refresh token" }, { status: 401 });
 
-    const backendRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/refresh`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refreshToken }),
-    });
+    const backendRes = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/auth/refresh`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken }),
+      },
+    );
 
-    if (!backendRes.ok) return NextResponse.json({ error: "Refresh failed" }, { status: backendRes.status });
+    if (!backendRes.ok)
+      return NextResponse.json(
+        { error: "Refresh failed" },
+        { status: backendRes.status },
+      );
 
     const data: LoginResponse = await backendRes.json();
     const response = NextResponse.json(data);
@@ -51,10 +93,11 @@ export async function POST(req: NextRequest) {
       maxAge: 60 * 60 * 24 * 30,
       path: "/",
     });
+    setRoleCookie(response, extractRole(data.accessToken));
     return response;
   }
 
-  const { refreshToken } = body;
+  const { refreshToken, accessToken } = body;
 
   const response = NextResponse.json({ ok: true });
 
@@ -65,6 +108,10 @@ export async function POST(req: NextRequest) {
     maxAge: 60 * 60 * 24 * 30,
     path: "/",
   });
+
+  if (accessToken) {
+    setRoleCookie(response, extractRole(accessToken));
+  }
 
   return response;
 }
@@ -89,5 +136,6 @@ export async function DELETE(req: NextRequest) {
 
   const response = NextResponse.json({ ok: true });
   response.cookies.delete("refresh_token");
+  clearRoleCookie(response);
   return response;
 }

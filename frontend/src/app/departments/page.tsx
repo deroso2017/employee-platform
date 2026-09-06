@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { departmentApi } from "@/lib/api";
 import type { Department } from "@/lib/types";
 import { useAuth } from "@/context/AuthContext";
-import { useRouter } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,24 +13,18 @@ import { toast } from "@/components/ui/toast";
 import { extractErrorMessage } from "@/lib/errors";
 
 export default function DepartmentsPage() {
-  const { user, loading } = useAuth();
-  const router = useRouter();
+  const { loading } = useAuth();
   const queryClient = useQueryClient();
 
   const [name, setName] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editName, setEditName] = useState("");
 
-  useEffect(() => {
-    if (user && user.role !== "ADMIN") router.push("/dashboard");
-  }, [user, router]);
-
   const { data: departments = [], isLoading } = useQuery({
     queryKey: ["departments"],
     enabled: !loading,
     queryFn: async () => {
       const res = await departmentApi.getAll();
-      console.log("Fetched departments:", res.data);
       return res.data;
     },
   });

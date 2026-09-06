@@ -34,7 +34,7 @@ export default function RegisterPage() {
       await authApi.register(values.email, values.password);
       const { data } = await authApi.login(values.email, values.password);
       setAccessToken(data.accessToken);
-      await persistRefreshToken(data.refreshToken);
+      await persistRefreshToken(data.refreshToken, data.accessToken);
       router.push("/dashboard");
     } catch (err: unknown) {
       setServerError(extractErrorMessage(err, "Registration failed."));

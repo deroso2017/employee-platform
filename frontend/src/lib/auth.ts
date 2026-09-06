@@ -25,11 +25,11 @@ export function clearAccessToken() {
 
 // Refresh token is set server-side via /api/auth/set-tokens
 // This client function just calls the route handler
-export async function persistRefreshToken(refreshToken: string) {
+export async function persistRefreshToken(refreshToken: string, accessToken?: string) {
   await fetch("/api/auth/set-tokens", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ refreshToken }),
+    body: JSON.stringify({ refreshToken, accessToken }),
   });
 }
 
