@@ -13,6 +13,7 @@ import { toast } from "@/components/ui/toast";
 import { extractErrorMessage } from "@/lib/errors";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Spinner } from "@/components/ui/spinner";
+import { Building2 } from "lucide-react";
 
 export default function DepartmentsPage() {
   const { loading } = useAuth();
@@ -152,8 +153,16 @@ export default function DepartmentsPage() {
                 <Spinner className="size-7" />
               </div>
             ) : departments.length === 0 ? (
-              <div className="flex items-center justify-center h-40 rounded-xl border border-dashed text-muted-foreground text-sm">
-                No departments yet. Create one to get started.
+              <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-12 text-center">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                  <Building2 className="h-6 w-6 text-muted-foreground" />
+                </div>
+
+                <h3 className="font-medium">No departments yet</h3>
+
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Create your first department to get started.
+                </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

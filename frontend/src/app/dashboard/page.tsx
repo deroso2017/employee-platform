@@ -24,6 +24,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 import { useProfileImage } from "@/lib/hooks/useProfileImage";
 import { Spinner } from "@/components/ui/spinner";
+import { Users } from "lucide-react";
 
 const DEFAULT_AVATAR = "/default-avatar.svg";
 
@@ -186,10 +187,26 @@ export default function DashboardPage() {
               ) : employees.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
-                    className="text-center py-8 text-muted-foreground"
+                    colSpan={canEdit || canDelete ? 5 : 4}
+                    className="py-12"
                   >
-                    No employees found.
+                    <div className="flex flex-col items-center justify-center text-center">
+                      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                        <Users className="h-6 w-6 text-muted-foreground" />
+                      </div>
+
+                      <h3 className="font-medium">No employees found</h3>
+
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        There are currently no employees to display.
+                      </p>
+
+                      {canCreate && (
+                        <Button className="mt-4" onClick={openCreate}>
+                          Add Employee
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : (
