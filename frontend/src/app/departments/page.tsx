@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 import { extractErrorMessage } from "@/lib/errors";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function DepartmentsPage() {
   const { loading } = useAuth();
@@ -147,8 +148,8 @@ export default function DepartmentsPage() {
           {/* Department list */}
           <div className="lg:col-span-2">
             {isLoading ? (
-              <div className="flex items-center justify-center h-40 text-muted-foreground text-sm">
-                Loading…
+              <div className="flex items-center justify-center">
+                <Spinner className="size-7" />
               </div>
             ) : departments.length === 0 ? (
               <div className="flex items-center justify-center h-40 rounded-xl border border-dashed text-muted-foreground text-sm">

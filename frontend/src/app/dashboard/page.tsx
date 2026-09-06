@@ -23,6 +23,7 @@ import { extractErrorMessage } from "@/lib/errors";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 import { useProfileImage } from "@/lib/hooks/useProfileImage";
+import { Spinner } from "@/components/ui/spinner";
 
 const DEFAULT_AVATAR = "/default-avatar.svg";
 
@@ -174,10 +175,12 @@ export default function DashboardPage() {
               {isLoading ? (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
-                    className="text-center py-8 text-muted-foreground"
+                    colSpan={canEdit || canDelete ? 5 : 4}
+                    className="py-8"
                   >
-                    Loading…
+                    <div className="flex items-center justify-center">
+                      <Spinner className="size-7" />
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : employees.length === 0 ? (
