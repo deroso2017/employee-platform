@@ -1,60 +1,55 @@
 package com.ronitech.employee_platform.service;
 
-import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
-
-import java.util.List;
-
-import org.springframework.stereotype.Service;
-
 import com.ronitech.employee_platform.dto.DepartmentRequest;
 import com.ronitech.employee_platform.dto.DepartmentResponse;
 import com.ronitech.employee_platform.entity.Department;
-import com.ronitech.employee_platform.exception.DepartmentNotFoundException;
+import com.ronitech.employee_platform.exception.ResourceNotFoundException;
 import com.ronitech.employee_platform.mapper.DepartmentMapper;
 import com.ronitech.employee_platform.repository.DepartmentRepository;
+import jakarta.transaction.Transactional;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class DepartmentService {
 
-    private final DepartmentRepository repository;
-    private final DepartmentMapper mapper;
+  private final DepartmentRepository repository;
+  private final DepartmentMapper mapper;
 
-    public DepartmentResponse create(DepartmentRequest request) {
+  public DepartmentResponse create(DepartmentRequest request) {
+    Department department = mapper.toEntity(request);
+    Department savedDepartment = repository.save(department);
 
-        Department department = mapper.toEntity(request);
-        Department savedDepartment = repository.save(department);
+    return mapper.toResponse(savedDepartment);
+  }
 
-        return mapper.toResponse(savedDepartment);
-    }
+  public List<DepartmentResponse> getDepartments() {
+    List<Department> departments = repository.findAll();
+    return departments.stream().map(mapper::toResponse).toList();
+  }
 
-    public List<DepartmentResponse> getDepartments() {
-        List<Department> departments = repository.findAll();
-        return departments.stream()
-                .map(mapper::toResponse)
-                .toList();
+  public DepartmentResponse update(Long id, DepartmentRequest request) {
+    Department department = repository
+      .findById(id)
+      .orElseThrow(() ->
+        new ResourceNotFoundException("Department not found with id: " + id)
+      );
 
-    }
+    department.setName(request.name());
 
-    public DepartmentResponse update(Long id, DepartmentRequest request) {
+    return mapper.toResponse(department);
+  }
 
-        Department department = repository.findById(id)
-                .orElseThrow(() -> new DepartmentNotFoundException(id));
+  public void delete(Long id) {
+    Department department = repository
+      .findById(id)
+      .orElseThrow(() ->
+        new ResourceNotFoundException("Department not found with id: " + id)
+      );
 
-        department.setName(request.name());
-
-        return mapper.toResponse(department);
-    }
-
-    public void delete(Long id) {
-
-        Department department = repository.findById(id)
-                .orElseThrow(() -> new DepartmentNotFoundException(id));
-
-        repository.delete(department);
-
-    }
-
+    repository.delete(department);
+  }
 }

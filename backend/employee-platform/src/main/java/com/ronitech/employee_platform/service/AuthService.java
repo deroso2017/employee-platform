@@ -9,8 +9,8 @@ import com.ronitech.employee_platform.dto.auth.RegisterRequest;
 import com.ronitech.employee_platform.dto.auth.RegisterResponse;
 import com.ronitech.employee_platform.entity.PasswordResetToken;
 import com.ronitech.employee_platform.entity.RefreshToken;
-import com.ronitech.employee_platform.entity.Role;
 import com.ronitech.employee_platform.entity.User;
+import com.ronitech.employee_platform.entity.enums.Role;
 import com.ronitech.employee_platform.event.PasswordResetRequestedEvent;
 import com.ronitech.employee_platform.event.UserRegisteredEvent;
 import com.ronitech.employee_platform.exception.EmailAlreadyExistsException;
@@ -18,7 +18,6 @@ import com.ronitech.employee_platform.mapper.UserMapper;
 import com.ronitech.employee_platform.publisher.NotificationEventPublisher;
 import com.ronitech.employee_platform.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -30,128 +29,108 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class AuthService {
 
-        private final UserRepository repository;
-        private final UserMapper mapper;
-        private final PasswordEncoder passwordEncoder;
-        private final AuthenticationManager authenticationManager;
-        private final JwtService jwtService;
-        private final RefreshTokenService refreshTokenService;
-        private final NotificationEventPublisher notificationEventPublisher;
-        private final PasswordResetService passwordResetService;
+  private final UserRepository repository;
+  private final UserMapper mapper;
+  private final PasswordEncoder passwordEncoder;
+  private final AuthenticationManager authenticationManager;
+  private final JwtService jwtService;
+  private final RefreshTokenService refreshTokenService;
+  private final NotificationEventPublisher notificationEventPublisher;
+  private final PasswordResetService passwordResetService;
 
-        public RegisterResponse register(RegisterRequest request) {
+  public RegisterResponse register(RegisterRequest request) {
+    if (repository.findByEmail(request.email()).isPresent()) {
+      throw new EmailAlreadyExistsException("Email already exists");
+    }
 
-                if (repository.findByEmail(request.email()).isPresent()) {
-                        throw new EmailAlreadyExistsException("Email already exists");
-                }
+    User user = mapper.toEntity(request);
 
-                User user = mapper.toEntity(request);
+    user.setPassword(passwordEncoder.encode(request.password()));
 
-                user.setPassword(
-                                passwordEncoder.encode(request.password()));
+    user.setRole(Role.USER);
 
-                user.setRole(Role.USER);
+    User savedUser = repository.save(user);
 
-                User savedUser = repository.save(user);
+    notificationEventPublisher.publishUserRegistered(
+      new UserRegisteredEvent(savedUser.getId(), savedUser.getEmail())
+    );
 
-                notificationEventPublisher.publishUserRegistered(
-                                new UserRegisteredEvent(
-                                                savedUser.getId(),
-                                                savedUser.getEmail()));
+    return mapper.toResponse(savedUser);
+  }
 
-                return mapper.toResponse(savedUser);
-        }
+  public LoginResponse login(LoginRequest request) {
+    authenticationManager.authenticate(
+      new UsernamePasswordAuthenticationToken(
+        request.email(),
+        request.password()
+      )
+    );
 
-        public LoginResponse login(LoginRequest request) {
+    User user = repository.findByEmail(request.email()).orElseThrow();
 
-                authenticationManager.authenticate(
-                                new UsernamePasswordAuthenticationToken(
-                                                request.email(),
-                                                request.password()));
+    String accessToken = jwtService.generateAccessToken(user);
+    String refreshToken = refreshTokenService.create(user).getToken();
 
-                User user = repository
-                                .findByEmail(request.email())
-                                .orElseThrow();
+    return new LoginResponse(accessToken, refreshToken);
+  }
 
-                String accessToken = jwtService.generateAccessToken(user);
-                String refreshToken = refreshTokenService.create(user).getToken();
+  public LoginResponse refresh(RefreshRequest request) {
+    RefreshToken refreshToken = refreshTokenService.validate(
+      request.refreshToken()
+    );
 
-                return new LoginResponse(accessToken, refreshToken);
+    User user = refreshToken.getUser();
 
-        }
+    String accessToken = jwtService.generateAccessToken(user);
 
-        public LoginResponse refresh(RefreshRequest request) {
+    RefreshToken newRefreshToken = refreshTokenService.rotate(refreshToken);
 
-                RefreshToken refreshToken = refreshTokenService.validate(
-                                request.refreshToken());
+    return new LoginResponse(accessToken, newRefreshToken.getToken());
+  }
 
-                User user = refreshToken.getUser();
+  public void logout(LogoutRequest request) {
+    refreshTokenService.revoke(request.refreshToken());
+  }
 
-                String accessToken = jwtService.generateAccessToken(user);
+  public void logoutAll(User user) {
+    refreshTokenService.revokeAll(user);
+  }
 
-                RefreshToken newRefreshToken = refreshTokenService.rotate(refreshToken);
+  public void requestPasswordReset(String email) {
+    repository
+      .findByEmail(email)
+      .ifPresent(user -> {
+        String resetToken = passwordResetService.createToken(user);
 
-                return new LoginResponse(
-                                accessToken,
-                                newRefreshToken.getToken()
+        notificationEventPublisher.publishPasswordResetRequested(
+          new PasswordResetRequestedEvent(
+            user.getId(),
+            user.getEmail(),
+            resetToken
+          )
+        );
+      });
+  }
 
-                );
+  @Transactional
+  public void resetPassword(PasswordResetRequest request) {
+    PasswordResetToken resetToken = passwordResetService.validateToken(
+      request.token()
+    );
 
-        }
+    User user = resetToken.getUser();
 
-        public void logout(LogoutRequest request) {
+    user.setPassword(passwordEncoder.encode(request.newPassword()));
 
-                refreshTokenService.revoke(
-                                request.refreshToken());
+    resetToken.markAsUsed();
+  }
 
-        }
+  @Transactional
+  public void changeRole(Long userId, Role newRole) {
+    User user = repository
+      .findById(userId)
+      .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        public void logoutAll(User user) {
-
-                refreshTokenService.revokeAll(user);
-
-        }
-
-        public void requestPasswordReset(String email) {
-                repository.findByEmail(email)
-                                .ifPresent(user -> {
-                                        String resetToken = passwordResetService.createToken(user);
-
-                                        notificationEventPublisher
-                                                        .publishPasswordResetRequested(
-                                                                        new PasswordResetRequestedEvent(
-                                                                                        user.getId(),
-                                                                                        user.getEmail(),
-                                                                                        resetToken));
-                                });
-        }
-
-        @Transactional
-        public void resetPassword(
-                        PasswordResetRequest request) {
-
-                PasswordResetToken resetToken = passwordResetService.validateToken(
-                                request.token());
-
-                User user = resetToken.getUser();
-
-                user.setPassword(
-                                passwordEncoder.encode(
-                                                request.newPassword()));
-
-                resetToken.markAsUsed();
-        }
-
-        @Transactional
-        public void changeRole(
-                        Long userId,
-                        Role newRole) {
-
-                User user = repository.findById(userId)
-                                .orElseThrow(() -> new IllegalArgumentException(
-                                                "User not found"));
-
-                user.setRole(newRole);
-        }
-
+    user.setRole(newRole);
+  }
 }
