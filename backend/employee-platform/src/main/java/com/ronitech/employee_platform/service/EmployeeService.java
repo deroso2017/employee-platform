@@ -5,12 +5,15 @@ import com.ronitech.employee_platform.dto.EmployeeResponse;
 import com.ronitech.employee_platform.dto.FileResponse;
 import com.ronitech.employee_platform.entity.Department;
 import com.ronitech.employee_platform.entity.Employee;
+import com.ronitech.employee_platform.entity.User;
+import com.ronitech.employee_platform.entity.enums.Role;
 import com.ronitech.employee_platform.event.EmployeeCreatedEvent;
 import com.ronitech.employee_platform.exception.ResourceNotFoundException;
 import com.ronitech.employee_platform.mapper.EmployeeMapper;
 import com.ronitech.employee_platform.publisher.EmployeeEventPublisher;
 import com.ronitech.employee_platform.repository.DepartmentRepository;
 import com.ronitech.employee_platform.repository.EmployeeRepository;
+import com.ronitech.employee_platform.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -19,6 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -27,6 +32,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class EmployeeService {
 
   private final EmployeeRepository employeeRepository;
+  private final UserRepository userRepository;
   private final DepartmentRepository departmentRepository;
   private final EmployeeMapper mapper;
   private final RedisTemplate<String, Object> redisTemplate;
@@ -35,6 +41,7 @@ public class EmployeeService {
 
   public EmployeeService(
     EmployeeRepository employeeRepository,
+    UserRepository userRepository,
     DepartmentRepository departmentRepository,
     EmployeeMapper mapper,
     RedisTemplate<String, Object> redisTemplate,
@@ -42,6 +49,7 @@ public class EmployeeService {
     FileStorageService fileStorageService
   ) {
     this.employeeRepository = employeeRepository;
+    this.userRepository = userRepository;
     this.departmentRepository = departmentRepository;
     this.mapper = mapper;
     this.redisTemplate = redisTemplate;
@@ -257,5 +265,46 @@ public class EmployeeService {
       "image/png".equals(contentType) ||
       "image/webp".equals(contentType)
     );
+  }
+
+  public EmployeeResponse linkUser(Long employeeId, Long userId) {
+    Employee employee = employeeRepository
+      .findById(employeeId)
+      .orElseThrow(() ->
+        new ResourceNotFoundException("Employee not found: " + employeeId)
+      );
+
+    User user = userRepository
+      .findById(userId)
+      .orElseThrow(() ->
+        new ResourceNotFoundException("User not found: " + userId)
+      );
+
+    if (employee.getUser() != null) {
+      throw new IllegalStateException("Employee already has a user account");
+    }
+
+    if (user.getEmployee() != null) {
+      throw new IllegalStateException("User is already linked to an employee");
+    }
+
+    employee.setUser(user);
+    user.setEmployee(employee);
+
+    if (user.getRole() == Role.USER) {
+      user.setRole(Role.EMPLOYEE);
+    }
+    userRepository.save(user);
+
+    return mapper.toResponse(employee);
+  }
+
+  @Transactional
+  public void changeRole(Long userId, Role newRole) {
+    User user = userRepository
+      .findById(userId)
+      .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+    user.setRole(newRole);
   }
 }

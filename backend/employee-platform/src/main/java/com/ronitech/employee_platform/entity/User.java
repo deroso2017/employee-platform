@@ -27,6 +27,10 @@ public class User implements UserDetails {
   @Enumerated(EnumType.STRING)
   private Role role;
 
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "employee_id", unique = true)
+  private Employee employee;
+
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
     return List.of(new SimpleGrantedAuthority(role.name()));

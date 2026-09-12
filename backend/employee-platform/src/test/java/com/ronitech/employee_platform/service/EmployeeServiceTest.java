@@ -15,6 +15,7 @@ import com.ronitech.employee_platform.mapper.EmployeeMapper;
 import com.ronitech.employee_platform.publisher.EmployeeEventPublisher;
 import com.ronitech.employee_platform.repository.DepartmentRepository;
 import com.ronitech.employee_platform.repository.EmployeeRepository;
+import com.ronitech.employee_platform.repository.UserRepository;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,6 +32,9 @@ class EmployeeServiceTest {
 
   @Mock
   private DepartmentRepository departmentRepository;
+
+  @Mock
+  private UserRepository userRepository;
 
   @Mock
   private EmployeeMapper mapper;
@@ -57,13 +61,11 @@ class EmployeeServiceTest {
     );
 
     Employee employee = new Employee();
-
     employee.setFirstName("John");
     employee.setLastName("Doe");
     employee.setEmail("john@test.com");
 
     Employee savedEmployee = new Employee();
-
     savedEmployee.setId(1L);
     savedEmployee.setFirstName("John");
     savedEmployee.setLastName("Doe");
@@ -75,32 +77,20 @@ class EmployeeServiceTest {
       "Doe",
       "john@test.com",
       null,
+      null,
       null
     );
 
     when(mapper.toEntity(request)).thenReturn(employee);
-
     when(employeeRepository.save(employee)).thenReturn(savedEmployee);
-
     when(mapper.toResponse(savedEmployee)).thenReturn(response);
-
-    EmployeeService service = new EmployeeService(
-      employeeRepository,
-      departmentRepository,
-      mapper,
-      redisTemplate,
-      eventPublisher,
-      fileStorageService
-    );
 
     // when
     EmployeeResponse result = service.create(request);
 
     // then
     verify(mapper).toEntity(request);
-
     verify(employeeRepository).save(employee);
-
     verify(mapper).toResponse(savedEmployee);
   }
 
@@ -108,9 +98,7 @@ class EmployeeServiceTest {
   void shouldDeleteEmployee() {
     // given
     Long id = 1L;
-
     Employee employee = new Employee();
-
     employee.setId(id);
     employee.setFirstName("John");
     employee.setLastName("Doe");
@@ -118,21 +106,11 @@ class EmployeeServiceTest {
 
     when(employeeRepository.findById(id)).thenReturn(Optional.of(employee));
 
-    EmployeeService service = new EmployeeService(
-      employeeRepository,
-      departmentRepository,
-      mapper,
-      redisTemplate,
-      eventPublisher,
-      fileStorageService
-    );
-
     // when
     service.delete(id);
 
     // then
     verify(employeeRepository).findById(id);
-
     verify(employeeRepository).delete(employee);
   }
 
@@ -142,19 +120,9 @@ class EmployeeServiceTest {
 
     when(employeeRepository.findById(id)).thenReturn(Optional.empty());
 
-    EmployeeService service = new EmployeeService(
-      employeeRepository,
-      departmentRepository,
-      mapper,
-      redisTemplate,
-      eventPublisher,
-      fileStorageService
-    );
-
     assertThrows(ResourceNotFoundException.class, () -> service.delete(id));
 
     verify(employeeRepository).findById(id);
-
     verify(employeeRepository, never()).delete(any(Employee.class));
   }
 
@@ -170,7 +138,6 @@ class EmployeeServiceTest {
     );
 
     Employee employee = new Employee();
-
     employee.setId(id);
     employee.setFirstName("John");
     employee.setLastName("Doe");
@@ -182,11 +149,11 @@ class EmployeeServiceTest {
       "Smith",
       "jane@test.com",
       null,
+      null,
       null
     );
 
     when(employeeRepository.findById(id)).thenReturn(Optional.of(employee));
-
     when(mapper.toResponse(employee)).thenReturn(response);
 
     // when
@@ -196,7 +163,6 @@ class EmployeeServiceTest {
     assertEquals("Jane", employee.getFirstName());
     assertEquals("Smith", employee.getLastName());
     assertEquals("jane@test.com", employee.getEmail());
-
     assertEquals(response, result);
 
     verify(employeeRepository).findById(id);
@@ -209,15 +175,6 @@ class EmployeeServiceTest {
     Long id = 100L;
 
     when(employeeRepository.findById(id)).thenReturn(Optional.empty());
-
-    EmployeeService service = new EmployeeService(
-      employeeRepository,
-      departmentRepository,
-      mapper,
-      redisTemplate,
-      eventPublisher,
-      fileStorageService
-    );
 
     // when + then
     assertThrows(ResourceNotFoundException.class, () -> service.findById(id));
@@ -242,7 +199,6 @@ class EmployeeServiceTest {
     );
 
     verify(employeeRepository).findById(id);
-
     verify(mapper, never()).toResponse(any(Employee.class));
   }
 }

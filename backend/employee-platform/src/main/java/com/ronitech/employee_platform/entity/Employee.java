@@ -1,7 +1,6 @@
 package com.ronitech.employee_platform.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -10,25 +9,28 @@ import lombok.Data;
 @Data
 public class Employee {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    private String firstName;
+  private String firstName;
 
-    private String lastName;
+  private String lastName;
 
-    private String email;
+  private String email;
 
-    private String phone;
+  private String phone;
 
-    private String profileImage;
+  private String profileImage;
 
-    private String profileImageContentType;
+  private String profileImageContentType;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "department_id")
-    // @JsonIgnore // Solution for the infinite recursion problem when serializing
-    // to JSON
-    private Department department;
+  @OneToOne(mappedBy = "employee", fetch = FetchType.LAZY)
+  private User user;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "department_id")
+  // @JsonIgnore // Solution for the infinite recursion problem when serializing
+  // to JSON
+  private Department department;
 }

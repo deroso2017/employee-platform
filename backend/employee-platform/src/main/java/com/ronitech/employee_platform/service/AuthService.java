@@ -124,13 +124,4 @@ public class AuthService {
 
     resetToken.markAsUsed();
   }
-
-  @Transactional
-  public void changeRole(Long userId, Role newRole) {
-    User user = repository
-      .findById(userId)
-      .orElseThrow(() -> new IllegalArgumentException("User not found"));
-
-    user.setRole(newRole);
-  }
 }
