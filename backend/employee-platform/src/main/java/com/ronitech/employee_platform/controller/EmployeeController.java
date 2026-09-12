@@ -3,7 +3,6 @@ package com.ronitech.employee_platform.controller;
 import com.ronitech.employee_platform.dto.EmployeeRequest;
 import com.ronitech.employee_platform.dto.EmployeeResponse;
 import com.ronitech.employee_platform.dto.FileResponse;
-import com.ronitech.employee_platform.dto.auth.ChangeRoleRequest;
 import com.ronitech.employee_platform.service.EmployeeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
