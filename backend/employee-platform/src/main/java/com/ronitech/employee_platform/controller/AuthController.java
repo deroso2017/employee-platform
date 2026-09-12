@@ -12,9 +12,7 @@ import com.ronitech.employee_platform.entity.User;
 import com.ronitech.employee_platform.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -24,96 +22,64 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final AuthService service;
+  private final AuthService service;
 
-    @PostMapping("/register")
-    public RegisterResponse register(
-            @Valid @RequestBody RegisterRequest request) {
+  @PostMapping("/register")
+  public RegisterResponse register(
+    @Valid @RequestBody RegisterRequest request
+  ) {
+    return service.register(request);
+  }
 
-        return service.register(request);
+  @PostMapping("/login")
+  public LoginResponse login(@Valid @RequestBody LoginRequest request) {
+    return service.login(request);
+  }
 
-    }
+  @PostMapping("/logout")
+  public ResponseEntity<Void> logout(
+    @Valid @RequestBody LogoutRequest request
+  ) {
+    service.logout(request);
 
-    @PostMapping("/login")
-    public LoginResponse login(
-            @Valid @RequestBody LoginRequest request) {
-        return service.login(request);
-    }
+    return ResponseEntity.noContent().build();
+  }
 
-    @PostMapping("/logout")
-    public ResponseEntity<Void> logout(
-            @Valid @RequestBody LogoutRequest request
+  @PostMapping("/logout-all")
+  public ResponseEntity<Void> logoutAll(@AuthenticationPrincipal User user) {
+    service.logoutAll(user);
 
-    ) {
+    return ResponseEntity.noContent().build();
+  }
 
-        service.logout(request);
+  @PostMapping("/refresh")
+  public LoginResponse refresh(@Valid @RequestBody RefreshRequest request) {
+    return service.refresh(request);
+  }
 
-        return ResponseEntity.noContent().build();
+  @GetMapping("/me")
+  public String me(Authentication authentication) {
+    return authentication.getName();
+  }
 
-    }
+  @GetMapping("/profile")
+  public User profile(@AuthenticationPrincipal User user) {
+    return user;
+  }
 
-    @PostMapping("/logout-all")
-    public ResponseEntity<Void> logoutAll(
-            @AuthenticationPrincipal User user) {
-        service.logoutAll(user);
+  @PostMapping("/forgot-password")
+  public ResponseEntity<Void> forgotPassword(@RequestParam String email) {
+    service.requestPasswordReset(email);
 
-        return ResponseEntity.noContent().build();
+    return ResponseEntity.ok().build();
+  }
 
-    }
+  @PostMapping("/reset-password")
+  public ResponseEntity<Void> resetPassword(
+    @Valid @RequestBody PasswordResetRequest request
+  ) {
+    service.resetPassword(request);
 
-    @PostMapping("/refresh")
-    public LoginResponse refresh(
-            @Valid @RequestBody RefreshRequest request
-
-    ) {
-        return service.refresh(request);
-
-    }
-
-    @GetMapping("/me")
-    public String me(Authentication authentication) {
-
-        return authentication.getName();
-
-    }
-
-    @GetMapping("/profile")
-    public User profile(
-            @AuthenticationPrincipal User user) {
-
-        return user;
-
-    }
-
-    @PostMapping("/forgot-password")
-    public ResponseEntity<Void> forgotPassword(
-            @RequestParam String email) {
-
-        service.requestPasswordReset(email);
-
-        return ResponseEntity.ok().build();
-    }
-
-    @PostMapping("/reset-password")
-    public ResponseEntity<Void> resetPassword(
-            @Valid @RequestBody PasswordResetRequest request) {
-
-        service.resetPassword(request);
-
-        return ResponseEntity.ok().build();
-    }
-
-    @PatchMapping("users/{id}/role")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> changeRole(
-            @PathVariable Long id,
-            @Valid @RequestBody ChangeRoleRequest request) {
-
-        service.changeRole(
-                id,
-                request.role());
-
-        return ResponseEntity.noContent().build();
-    }
-
+    return ResponseEntity.ok().build();
+  }
 }
