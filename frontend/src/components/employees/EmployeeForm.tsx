@@ -187,23 +187,33 @@ export function EmployeeForm({
           <Controller
             name="departmentId"
             control={control}
-            render={({ field }) => (
-              <Select
-                value={field.value ?? ""}
-                onValueChange={(v) => field.onChange(v || null)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a department" />
-                </SelectTrigger>
-                <SelectContent>
-                  {departments.map((d) => (
-                    <SelectItem key={d.id} value={d.id.toString()}>
-                      {d.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
+            render={({ field }) => {
+              const selectedDepartment = departments.find(
+                (d) => d.id.toString() === field.value,
+              );
+
+              return (
+                <Select
+                  value={field.value ?? ""}
+                  onValueChange={(v) => field.onChange(v || null)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a department">
+                      {selectedDepartment
+                        ? selectedDepartment.name
+                        : "Select a department"}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {departments.map((d) => (
+                      <SelectItem key={d.id} value={d.id.toString()}>
+                        {d.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              );
+            }}
           />
         </div>
       )}

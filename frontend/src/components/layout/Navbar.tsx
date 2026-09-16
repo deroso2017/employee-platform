@@ -13,7 +13,17 @@ export default function Navbar() {
   const navLinks = [
     { href: "/dashboard", label: "Employees" },
     ...(user?.role === "ADMIN"
-      ? [{ href: "/departments", label: "Departments" }]
+      ? [
+          { href: "/departments", label: "Departments" },
+          { href: "/users", label: "Users" },
+        ]
+      : []),
+    ...(user?.role === "MANAGER" || user?.role === "ADMIN"
+      ? [
+          { href: "/teams", label: "Teams" },
+          { href: "/projects", label: "Projects" },
+          { href: "/tasks", label: "Tasks" },
+        ]
       : []),
   ];
 

@@ -5,7 +5,18 @@ import {
   isAccessTokenExpired,
   setAccessToken,
 } from "./auth";
-import type { Department, Employee, LoginResponse, Page, User } from "./types";
+import type {
+  Department,
+  Employee,
+  LoginResponse,
+  Page,
+  Project,
+  Task,
+  TaskStatus,
+  TaskPriority,
+  Team,
+  User,
+} from "./types";
 import { useAuth } from "@/context/AuthContext";
 
 const api = axios.create({
@@ -156,6 +167,25 @@ export const employeeApi = {
     `/api/employees/${employeeId}/profile-image`,
 };
 
+// Users
+export const userApi = {
+  getAll: (page = 0, size = 10) =>
+    api.get<Page<User>>(`/api/users?page=${page}&size=${size}`),
+  getById: (id: number) => api.get<User>(`/api/users/${id}`),
+  search: (name: string, page = 0) =>
+    api.get<Page<User>>("/api/users/search", {
+      params: {
+        name,
+        page,
+      },
+    }),
+  update: (
+    id: number,
+    data: { email: string; password: string; role: string },
+  ) => api.put<User>(`/api/users/${id}`, data),
+  delete: (id: number) => api.delete(`/api/users/${id}`),
+};
+
 // Departments
 export const departmentApi = {
   getAll: () => api.get<Department[]>("/api/departments"),
@@ -163,6 +193,87 @@ export const departmentApi = {
   update: (id: number, name: string) =>
     api.put<Department>(`/api/departments/${id}`, { name }),
   delete: (id: number) => api.delete(`/api/departments/${id}`),
+};
+
+// Teams
+export const teamApi = {
+  getAll: () => api.get<Team[]>("/api/teams"),
+
+  getById: (id: number) => api.get<Team>(`/api/teams/${id}`),
+
+  create: (data: { name: string }) => api.post<Team>("/api/teams", data),
+
+  update: (id: number, data: { name: string }) =>
+    api.patch<Team>(`/api/teams/${id}`, data),
+
+  delete: (id: number) => api.delete(`/api/teams/${id}`),
+
+  getMembers: (teamId: number) =>
+    api.get<Employee[]>(`/api/teams/${teamId}/members`),
+
+  addMember: (teamId: number, employeeId: number) =>
+    api.post<Employee>(`/api/teams/${teamId}/members/${employeeId}`),
+
+  removeMember: (teamId: number, employeeId: number) =>
+    api.delete(`/api/teams/${teamId}/members/${employeeId}`),
+};
+
+// Projects
+export const projectApi = {
+  getAll: () => api.get<Project[]>("/api/projects"),
+
+  getById: (id: number) => api.get<Project>(`/api/projects/${id}`),
+
+  create: (data: {
+    name: string;
+    description?: string;
+    status?: string;
+    teamId: number;
+  }) => api.post<Project>("/api/projects", data),
+
+  update: (
+    id: number,
+    data: {
+      name: string;
+      description?: string;
+      status?: string;
+      teamId: number;
+    },
+  ) => api.patch<Project>(`/api/projects/${id}`, data),
+
+  delete: (id: number) => api.delete(`/api/projects/${id}`),
+};
+
+// Tasks
+export const taskApi = {
+  getByProject: (projectId: number) =>
+    api.get<Task[]>(`/api/projects/${projectId}/tasks`),
+
+  getById: (id: number) => api.get<Task>(`/api/tasks/${id}`),
+
+  create: (
+    projectId: number,
+    data: {
+      title: string;
+      description?: string;
+      status: TaskStatus;
+      priority: TaskPriority;
+      assigneeId: number | null;
+    },
+  ) => api.post<Task>(`/api/projects/${projectId}/tasks`, data),
+
+  update: (
+    id: number,
+    data: {
+      title: string;
+      description?: string;
+      status: TaskStatus;
+      priority: TaskPriority;
+      assigneeId: number | null;
+    },
+  ) => api.patch<Task>(`/api/tasks/${id}`, data),
+
+  delete: (id: number) => api.delete(`/api/tasks/${id}`),
 };
 
 export default api;

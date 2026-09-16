@@ -1,13 +1,13 @@
 package com.ronitech.employee_platform.controller;
 
-import com.ronitech.employee_platform.dto.EmployeeResponse;
 import com.ronitech.employee_platform.dto.auth.ChangeRoleRequest;
-import com.ronitech.employee_platform.service.EmployeeService;
+import com.ronitech.employee_platform.dto.auth.RegisterRequest;
+import com.ronitech.employee_platform.dto.auth.RegisterResponse;
+import com.ronitech.employee_platform.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -15,11 +15,37 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
+@PreAuthorize("hasAuthority('ADMIN')")
 public class UserController {
 
-  private final EmployeeService service;
+  private final UserService service;
 
-  @PreAuthorize("hasAuthority('ADMIN')")
+  @GetMapping
+  public Page<RegisterResponse> getEmployees(Pageable pageable) {
+    return service.findAll(pageable);
+  }
+
+  @GetMapping("/{id}")
+  public RegisterResponse getUser(@PathVariable Long id) {
+    return service.findById(id);
+  }
+
+  @PutMapping("/{id}")
+  public RegisterResponse updateEmployee(
+    @PathVariable Long id,
+    @Valid @RequestBody RegisterRequest request
+  ) {
+    return service.update(id, request);
+  }
+
+  @GetMapping("/search")
+  public Page<RegisterResponse> search(
+    @RequestParam String name,
+    Pageable pageable
+  ) {
+    return service.search(name, pageable);
+  }
+
   @PatchMapping("/{id}/role")
   public ResponseEntity<Void> changeRole(
     @PathVariable Long id,

@@ -3,6 +3,7 @@ export type Role = "ADMIN" | "MANAGER" | "EMPLOYEE";
 export interface User {
   id: number;
   email: string;
+  password?: string;
   role: Role;
 }
 
@@ -33,6 +34,41 @@ export interface Employee {
 export interface Department {
   id: number;
   name: string;
+}
+
+export interface Team {
+  id: number;
+  name: string;
+  memberCount: number;
+}
+
+export type ProjectStatus = "PLANNED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+
+export interface Project {
+  id: number;
+  name: string;
+  description: string | null;
+  status: ProjectStatus;
+  teamId: number;
+  teamName: string;
+  managerId: number;
+  managerName: string;
+}
+
+export type TaskStatus = "TODO" | "IN_PROGRESS" | "DONE" | "CANCELLED";
+
+export type TaskPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+
+export interface Task {
+  id: number;
+  title: string;
+  description: string | null;
+  status: TaskStatus;
+  priority: TaskPriority;
+  projectId: number;
+  projectName: string;
+  assigneeId: number | null;
+  assigneeName: string | null;
 }
 
 export interface Page<T> {
