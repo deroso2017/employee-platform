@@ -18,7 +18,7 @@ public class TaskController {
   private final TaskService taskService;
 
   @PostMapping("/projects/{projectId}/tasks")
-  @PreAuthorize("hasAuthority('MANAGER')")
+  @PreAuthorize("hasAnyAuthority('MANAGER', 'ADMIN')")
   @ResponseStatus(HttpStatus.CREATED)
   public TaskResponse create(
     @PathVariable Long projectId,
@@ -38,7 +38,7 @@ public class TaskController {
   }
 
   @PatchMapping("/tasks/{taskId}")
-  @PreAuthorize("hasAuthority('MANAGER')")
+  @PreAuthorize("hasAnyAuthority('MANAGER', 'ADMIN')")
   public TaskResponse update(
     @PathVariable Long taskId,
     @Valid @RequestBody TaskRequest request

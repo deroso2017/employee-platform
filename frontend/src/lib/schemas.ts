@@ -20,6 +20,16 @@ export const employeeSchema = z.object({
   departmentId: z.string().nullable().optional(),
 });
 
+export const userSchema = z.object({
+  email: z.string().min(1, "Email is required").email("Invalid email address"),
+  role: z
+    .string()
+    .min(1, "Role is required")
+    .max(100, "Role must be at most 100 characters"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+});
+
 export type LoginFormValues = z.infer<typeof loginSchema>;
 export type RegisterFormValues = z.infer<typeof registerSchema>;
 export type EmployeeFormValues = z.infer<typeof employeeSchema>;
+export type UserFormValues = z.infer<typeof userSchema>;
