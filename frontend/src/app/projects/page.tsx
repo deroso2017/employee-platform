@@ -62,6 +62,9 @@ export default function ProjectsPage() {
       queryClient.invalidateQueries({
         queryKey: ["projects"],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard"],
+      });
 
       setDeleteDialogOpen(false);
       setProjectToDelete(null);

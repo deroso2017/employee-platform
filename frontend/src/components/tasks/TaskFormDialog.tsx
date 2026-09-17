@@ -89,6 +89,10 @@ export function TaskFormDialog({
         queryKey: ["tasks"],
       });
 
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard"],
+      });
+
       toast.add({
         title: task ? "Task updated" : "Task created",
         description: task

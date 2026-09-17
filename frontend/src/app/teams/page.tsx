@@ -55,6 +55,9 @@ export default function TeamsPage() {
       queryClient.invalidateQueries({
         queryKey: ["teams"],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard"],
+      });
 
       setDeleteDialogOpen(false);
       setTeamToDelete(null);
