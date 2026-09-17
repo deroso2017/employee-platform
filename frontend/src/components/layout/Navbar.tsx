@@ -1,63 +1,53 @@
 "use client";
 
-import { useAuth } from "@/context/AuthContext";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+
+import { useAuth } from "@/context/AuthContext";
+
+import { NAV_ITEMS } from "@/config/navigation";
+
+import { DesktopNav } from "./DesktopNav";
+import { TabletNav } from "./TabletNav";
+import { MobileNav } from "./MobileNav";
+import { UserMenu } from "./UserMenu";
 
 export default function Navbar() {
-  const { user, logout } = useAuth();
-  const pathname = usePathname();
+  const { user } = useAuth();
 
-  const navLinks = [
-    { href: "/dashboard", label: "Employees" },
-    ...(user?.role === "ADMIN"
-      ? [
-          { href: "/departments", label: "Departments" },
-          { href: "/users", label: "Users" },
-        ]
-      : []),
-    ...(user?.role === "MANAGER" || user?.role === "ADMIN"
-      ? [
-          { href: "/teams", label: "Teams" },
-          { href: "/projects", label: "Projects" },
-          { href: "/tasks", label: "Tasks" },
-        ]
-      : []),
-  ];
+  const visibleNavItems = NAV_ITEMS.filter((item) =>
+    user?.role ? item.roles.includes(user.role) : false,
+  );
 
   return (
-    <header className="border-b bg-background">
-      <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <span className="font-semibold text-sm">Employee Platform</span>
-          <nav className="flex gap-4">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`text-sm ${
-                  pathname === link.href
-                    ? "text-foreground font-medium"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
+        {/* Mobile menu */}
+        <MobileNav items={visibleNavItems} />
+
+        {/* Brand */}
+        <Link
+          href="/dashboard"
+          className="flex shrink-0 items-center gap-2"
+          aria-label="Employee Platform dashboard"
+        >
+          <span className="rounded-md bg-primary px-2 py-1 text-xs font-semibold text-primary-foreground">
+            EP
+          </span>
+
+          <span className="hidden font-semibold tracking-tight sm:inline">
+            Employee Platform
+          </span>
+        </Link>
+
+        {/* Navigation */}
+        <div className="flex min-w-0 flex-1 items-center">
+          <DesktopNav items={visibleNavItems} />
+          <TabletNav items={visibleNavItems} />
         </div>
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-muted-foreground">{user?.email}</span>
-          {user?.role && (
-            <Badge variant="secondary" className="text-xs">
-              {user.role}
-            </Badge>
-          )}
-          <Button variant="outline" size="sm" onClick={logout}>
-            Sign out
-          </Button>
+
+        {/* Account */}
+        <div className="ml-auto flex shrink-0 items-center">
+          <UserMenu />
         </div>
       </div>
     </header>

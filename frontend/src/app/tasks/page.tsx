@@ -88,6 +88,9 @@ export default function TasksPage() {
       queryClient.invalidateQueries({
         queryKey: ["tasks"],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard"],
+      });
 
       toast.add({
         title: "Task deleted",

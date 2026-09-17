@@ -16,6 +16,7 @@ import type {
   TaskPriority,
   Team,
   User,
+  DashboardResponse,
 } from "./types";
 import { useAuth } from "@/context/AuthContext";
 
@@ -274,6 +275,11 @@ export const taskApi = {
   ) => api.patch<Task>(`/api/tasks/${id}`, data),
 
   delete: (id: number) => api.delete(`/api/tasks/${id}`),
+};
+
+// Dashboard
+export const dashboardApi = {
+  get: () => api.get<DashboardResponse>("/api/dashboard"),
 };
 
 export default api;

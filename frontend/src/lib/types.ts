@@ -1,4 +1,4 @@
-export type Role = "ADMIN" | "MANAGER" | "EMPLOYEE";
+export type Role = "ADMIN" | "MANAGER" | "EMPLOYEE" | "USER";
 
 export interface User {
   id: number;
@@ -69,6 +69,31 @@ export interface Task {
   projectName: string;
   assigneeId: number | null;
   assigneeName: string | null;
+}
+
+export interface DashboardOverview {
+  employees: number;
+  departments: number;
+  teams: number;
+  projects: number;
+  tasks: number;
+}
+
+export interface DashboardProjectOverview {
+  byStatus: Record<ProjectStatus, number>;
+}
+
+export interface DashboardTaskOverview {
+  byStatus: Record<TaskStatus, number>;
+  byPriority: Record<TaskPriority, number>;
+}
+
+export interface DashboardResponse {
+  overview: DashboardOverview;
+  projects: DashboardProjectOverview;
+  tasks: DashboardTaskOverview;
+  recentProjects: Project[];
+  myTasks: Task[];
 }
 
 export interface Page<T> {

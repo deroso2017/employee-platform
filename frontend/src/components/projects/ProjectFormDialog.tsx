@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { projectApi, teamApi } from "@/lib/api";
 
@@ -60,6 +60,8 @@ export default function ProjectFormDialog({
     project?.teamId ? String(project.teamId) : "",
   );
 
+  const queryClient = useQueryClient();
+
   const { data: teams = [], isLoading: teamsLoading } = useQuery({
     queryKey: ["teams"],
     enabled: open,
@@ -102,6 +104,13 @@ export default function ProjectFormDialog({
       toast.add({
         title: isEditing ? "Project updated" : "Project created",
         type: "success",
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["projects"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard"],
       });
 
       onSaved();

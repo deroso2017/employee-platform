@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { teamApi } from "@/lib/api";
 import type { Team } from "@/lib/types";
@@ -28,6 +28,8 @@ export default function TeamFormDialog({
   // Initialize state directly from props without useEffect
   const [name, setName] = useState(team?.name ?? "");
 
+  const queryClient = useQueryClient();
+
   const mutation = useMutation({
     mutationFn: async () => {
       const trimmedName = name.trim();
@@ -51,6 +53,13 @@ export default function TeamFormDialog({
       toast.add({
         title: isEditing ? "Team updated" : "Team created",
         type: "success",
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["teams"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard"],
       });
 
       onSaved();

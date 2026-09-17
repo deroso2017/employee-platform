@@ -18,6 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "../ui/toast";
 
 const DEFAULT_AVATAR = "/default-avatar.svg";
 
@@ -42,6 +44,8 @@ export function EmployeeForm({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const queryClient = useQueryClient();
+
   const savedImageApiUrl = employee?.profileImage
     ? employeeApi.profileImageUrl(employee.id)
     : null;
@@ -63,24 +67,9 @@ export function EmployeeForm({
     },
   });
 
-  // Revoke blob URL on unmount / when preview changes
-  useEffect(() => {
-    return () => {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-    };
-  }, [previewUrl]);
-
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setImageFile(file);
-    setPreviewUrl(URL.createObjectURL(file));
-  }
-
-  async function onSubmit(values: EmployeeFormValues) {
-    setServerError("");
-    try {
+  // Mutation for saving/updating the employee
+  const saveEmployeeMutation = useMutation({
+    mutationFn: async (values: EmployeeFormValues) => {
       let savedEmployee: Employee;
 
       if (employee) {
@@ -109,11 +98,52 @@ export function EmployeeForm({
         await employeeApi.uploadProfileImage(savedEmployee.id, imageFile);
       }
 
+      return savedEmployee;
+    },
+    onSuccess: () => {
+      toast.add({
+        title: employee ? "Employee updated" : "Employee created",
+        type: "success",
+      });
+      // Invalidate queries to auto-refetch employee lists across the app
+      queryClient.invalidateQueries({
+        queryKey: ["employees"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard"],
+      });
       onSaved();
       onClose();
-    } catch (err) {
+    },
+    onError: (err) => {
+      toast.add({
+        title: employee
+          ? "Failed to update employee"
+          : "Failed to create employee",
+        type: "error",
+      });
       setServerError(extractErrorMessage(err, "Failed to save employee."));
-    }
+    },
+  });
+
+  // Revoke blob URL on unmount / when preview changes
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setImageFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  }
+
+  async function onSubmit(values: EmployeeFormValues) {
+    setServerError("");
+    saveEmployeeMutation.mutate(values);
   }
 
   return (

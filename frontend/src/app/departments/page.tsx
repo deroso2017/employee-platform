@@ -39,7 +39,12 @@ export default function DepartmentsPage() {
   const createMutation = useMutation({
     mutationFn: (newName: string) => departmentApi.create(newName),
     onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: ["departments"] });
+      queryClient.invalidateQueries({
+        queryKey: ["departments"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard"],
+      });
       setName("");
       toast.add({
         title: "Department created",
@@ -60,7 +65,13 @@ export default function DepartmentsPage() {
     mutationFn: ({ id, newName }: { id: number; newName: string }) =>
       departmentApi.update(id, newName),
     onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: ["departments"] });
+      queryClient.invalidateQueries({
+        queryKey: ["departments"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard"],
+      });
+
       setEditingId(null);
       toast.add({
         title: "Department updated",

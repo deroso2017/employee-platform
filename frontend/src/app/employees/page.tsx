@@ -1,0 +1,308 @@
+"use client";
+
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { employeeApi } from "@/lib/api";
+import type { Employee } from "@/lib/types";
+import { useAuth } from "@/context/AuthContext";
+import Navbar from "@/components/layout/Navbar";
+import EmployeeFormDialog from "@/components/employees/EmployeeFormDialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useDebounce } from "@/lib/hooks/useDebounce";
+import { toast } from "@/components/ui/toast";
+import { extractErrorMessage } from "@/lib/errors";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+
+import { useProfileImage } from "@/lib/hooks/useProfileImage";
+import { Spinner } from "@/components/ui/spinner";
+import { Users } from "lucide-react";
+
+const DEFAULT_AVATAR = "/default-avatar.svg";
+
+function EmployeeAvatar({ employee }: { employee: Employee }) {
+  const apiSrc = employee.profileImage
+    ? employeeApi.profileImageUrl(employee.id)
+    : null;
+  const blobUrl = useProfileImage(apiSrc);
+  const src = blobUrl ?? DEFAULT_AVATAR;
+
+  return (
+    <div className="relative w-9 h-9 rounded-full overflow-hidden border bg-muted shrink-0">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt={`${employee.firstName} ${employee.lastName}`}
+        className="w-full h-full object-cover"
+      />
+    </div>
+  );
+}
+
+export default function DashboardPage() {
+  const { user, loading } = useAuth();
+  const queryClient = useQueryClient();
+
+  const [page, setPage] = useState(0);
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 400);
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<Employee | null>(null);
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(
+    null,
+  );
+
+  const canCreate = user?.role === "ADMIN" || user?.role === "MANAGER";
+  const canEdit = user?.role === "ADMIN";
+  const canDelete = user?.role === "ADMIN";
+
+  // Fetch employees with automatic caching and background refetching
+  const { data, isLoading } = useQuery({
+    queryKey: ["employees", page, debouncedSearch],
+    enabled: !loading, // wait for auth session to restore before fetching
+    queryFn: async () => {
+      const res = debouncedSearch
+        ? await employeeApi.search(debouncedSearch, page)
+        : await employeeApi.getAll(page);
+      return res.data;
+    },
+  });
+
+  const employees = data?.content ?? [];
+  const totalPages = data?.totalPages ?? 0;
+
+  // Delete mutation with automatic cache invalidation
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => employeeApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["employees"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard"],
+      });
+
+      setDeleteDialogOpen(false);
+      setEmployeeToDelete(null);
+
+      toast.add({
+        title: "Employee deleted",
+        type: "success",
+      });
+    },
+    onError: (err) => {
+      toast.add({
+        title: "Failed to delete employee",
+        description: extractErrorMessage(err),
+        type: "error",
+      });
+    },
+  });
+
+  function handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setSearch(e.target.value);
+    setPage(0); // reset to first page on every new search
+  }
+
+  function handleClear() {
+    setSearch("");
+    setPage(0);
+  }
+
+  function handleDelete(employee: Employee) {
+    setEmployeeToDelete(employee);
+    setDeleteDialogOpen(true);
+  }
+
+  function confirmDelete() {
+    if (!employeeToDelete) return;
+
+    deleteMutation.mutate(employeeToDelete.id);
+  }
+
+  function openCreate() {
+    setEditing(null);
+    setDialogOpen(true);
+  }
+
+  function openEdit(emp: Employee) {
+    setEditing(emp);
+    setDialogOpen(true);
+  }
+
+  return (
+    <div className="min-h-screen bg-muted/20">
+      <Navbar />
+      <main className="max-w-6xl mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-semibold">Employees</h1>
+          {canCreate && <Button onClick={openCreate}>Add Employee</Button>}
+        </div>
+
+        <div className="flex gap-2 mb-6">
+          <Input
+            placeholder="Search by name…"
+            value={search}
+            onChange={handleSearchChange}
+            className="max-w-xs"
+          />
+          {search && (
+            <Button type="button" variant="ghost" onClick={handleClear}>
+              Clear
+            </Button>
+          )}
+        </div>
+
+        <div className="rounded-lg border bg-background">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-12"></TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Department</TableHead>
+                {(canEdit || canDelete) && (
+                  <TableHead className="w-32">Actions</TableHead>
+                )}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={canEdit || canDelete ? 5 : 4}
+                    className="py-8"
+                  >
+                    <div className="flex items-center justify-center">
+                      <Spinner className="size-7" />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : employees.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={canEdit || canDelete ? 5 : 4}
+                    className="py-12"
+                  >
+                    <div className="flex flex-col items-center justify-center text-center">
+                      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                        <Users className="h-6 w-6 text-muted-foreground" />
+                      </div>
+
+                      <h3 className="font-medium">No employees found</h3>
+
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        There are currently no employees to display.
+                      </p>
+
+                      {canCreate && (
+                        <Button className="mt-4" onClick={openCreate}>
+                          Add Employee
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                employees.map((emp) => (
+                  <TableRow key={emp.id}>
+                    <TableCell>
+                      <EmployeeAvatar employee={emp} />
+                    </TableCell>
+                    <TableCell>
+                      {emp.firstName} {emp.lastName}
+                    </TableCell>
+                    <TableCell>{emp.email}</TableCell>
+                    <TableCell>{emp.department?.name ?? "—"}</TableCell>
+                    {(canEdit || canDelete) && (
+                      <TableCell>
+                        <div className="flex gap-2">
+                          {canEdit && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openEdit(emp)}
+                            >
+                              Edit
+                            </Button>
+                          )}
+                          {canDelete && (
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleDelete(emp)}
+                            >
+                              Delete
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        {totalPages > 1 && (
+          <div className="flex justify-center gap-2 mt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page === 0}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              Previous
+            </Button>
+            <span className="text-sm self-center text-muted-foreground">
+              Page {page + 1} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages - 1}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Next
+            </Button>
+          </div>
+        )}
+      </main>
+
+      <EmployeeFormDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        onSaved={() => {
+          queryClient.invalidateQueries({ queryKey: ["employees"] });
+        }}
+        employee={editing}
+      />
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete employee?"
+        description={
+          employeeToDelete
+            ? `Are you sure you want to delete ${employeeToDelete.firstName} ${employeeToDelete.lastName}? This action cannot be undone.`
+            : undefined
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        loading={deleteMutation.isPending}
+        onConfirm={confirmDelete}
+      />
+    </div>
+  );
+}

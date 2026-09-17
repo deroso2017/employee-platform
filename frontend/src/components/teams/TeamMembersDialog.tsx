@@ -71,6 +71,9 @@ export default function TeamMembersDialog({
       queryClient.invalidateQueries({
         queryKey: ["teams"],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard"],
+      });
 
       setSelectedEmployeeId("");
 
@@ -102,6 +105,10 @@ export default function TeamMembersDialog({
 
       queryClient.invalidateQueries({
         queryKey: ["teams"],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard"],
       });
 
       onChanged();
