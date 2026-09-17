@@ -4,6 +4,7 @@ import com.ronitech.employee_platform.entity.Employee;
 import com.ronitech.employee_platform.entity.User;
 import com.ronitech.employee_platform.exception.ResourceNotFoundException;
 import com.ronitech.employee_platform.repository.UserRepository;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
@@ -45,5 +46,13 @@ public class CurrentUserService {
     }
 
     return user.getEmployee();
+  }
+
+  public Employee getCurrentEmployeeOrNull() {
+    try {
+      return getCurrentEmployee();
+    } catch (RuntimeException exception) {
+      return null;
+    }
   }
 }
