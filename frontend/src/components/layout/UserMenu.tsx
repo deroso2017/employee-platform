@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -63,37 +64,40 @@ export function UserMenu() {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="w-64">
-        <DropdownMenuLabel>
-          <div className="flex flex-col gap-1">
-            <span className="text-sm font-medium">{user.email}</span>
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>
+            <div className="flex flex-col gap-1">
+              <span className="text-sm font-medium">{user.email}</span>
 
-            <span className="text-xs font-normal text-muted-foreground">
-              {user.role}
-            </span>
-          </div>
-        </DropdownMenuLabel>
-
-        <DropdownMenuSeparator />
-
-        <DropdownMenuItem onClick={() => router.push("/profile")}>
-          <UserCircle className="mr-2 size-4" />
-          Profile
-        </DropdownMenuItem>
-
-        <DropdownMenuItem onClick={() => router.push("/settings")}>
-          <Settings className="mr-2 size-4" />
-          Settings
-        </DropdownMenuItem>
+              <span className="text-xs font-normal text-muted-foreground">
+                {user.role}
+              </span>
+            </div>
+          </DropdownMenuLabel>
+        </DropdownMenuGroup>
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem
-          onClick={logout}
-          className="text-destructive focus:text-destructive"
-        >
-          <LogOut className="mr-2 size-4" />
-          Sign out
-        </DropdownMenuItem>
+        <DropdownMenuGroup>
+          <DropdownMenuItem onClick={() => router.push("/profile")}>
+            <UserCircle className="mr-2 size-4" />
+            Profile
+          </DropdownMenuItem>
+
+          <DropdownMenuItem onClick={() => router.push("/settings")}>
+            <Settings className="mr-2 size-4" />
+            Settings
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+
+        <DropdownMenuSeparator />
+
+        <DropdownMenuGroup>
+          <DropdownMenuItem onClick={logout} variant="destructive">
+            <LogOut className="mr-2 size-4" />
+            Sign out
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -1,29 +1,31 @@
-"use client";
-
 import { FolderKanban } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
 import type { DashboardProjectOverview } from "@/lib/types";
 
 interface ProjectOverviewProps {
   data: DashboardProjectOverview;
 }
 
-const projectStatuses = [
-  {
-    key: "ACTIVE",
-    label: "Active",
-  },
+const statuses = [
   {
     key: "PLANNED",
     label: "Planned",
+    className: "bg-slate-400",
+  },
+  {
+    key: "ACTIVE",
+    label: "Active",
+    className: "bg-primary",
   },
   {
     key: "COMPLETED",
     label: "Completed",
+    className: "bg-success",
   },
   {
     key: "CANCELLED",
     label: "Cancelled",
+    className: "bg-destructive",
   },
 ] as const;
 
@@ -34,37 +36,57 @@ export function ProjectOverview({ data }: ProjectOverviewProps) {
   );
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <FolderKanban className="size-5 text-muted-foreground" />
-          <CardTitle>Project Overview</CardTitle>
+    <section
+      className="
+        rounded-xl
+        border border-border/80
+        bg-card
+        p-5
+        shadow-sm
+      "
+    >
+      <div className="flex items-center gap-3">
+        <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <FolderKanban className="size-4" />
         </div>
-      </CardHeader>
 
-      <CardContent className="space-y-5">
-        {projectStatuses.map((status) => {
+        <div>
+          <h2 className="font-semibold tracking-tight">Project overview</h2>
+
+          <p className="text-xs text-muted-foreground">
+            {total} total projects
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-6 space-y-5">
+        {statuses.map((status) => {
           const value = data.byStatus[status.key] ?? 0;
-          const percentage = total > 0 ? (value / total) * 100 : 0;
+          const percentage =
+            total === 0 ? 0 : Math.round((value / total) * 100);
 
           return (
-            <div key={status.key} className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span>{status.label}</span>
+            <div key={status.key}>
+              <div className="mb-2 flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <span className={`size-2 rounded-full ${status.className}`} />
+
+                  <span className="text-muted-foreground">{status.label}</span>
+                </div>
 
                 <span className="font-medium">{value}</span>
               </div>
 
-              <div className="h-2 overflow-hidden rounded-full bg-muted">
+              <div className="h-1.5 overflow-hidden rounded-full bg-muted">
                 <div
-                  className="h-full rounded-full bg-foreground/70 transition-all"
+                  className={`h-full rounded-full ${status.className}`}
                   style={{ width: `${percentage}%` }}
                 />
               </div>
             </div>
           );
         })}
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }

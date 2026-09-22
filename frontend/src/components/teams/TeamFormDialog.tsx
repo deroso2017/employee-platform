@@ -1,14 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2, Users } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { teamApi } from "@/lib/api";
 import type { Team } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/toast";
 import { extractErrorMessage } from "@/lib/errors";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface TeamFormDialogProps {
   open: boolean;
@@ -17,49 +30,69 @@ interface TeamFormDialogProps {
   onSaved: () => void;
 }
 
+interface TeamFormValues {
+  name: string;
+}
+
 export default function TeamFormDialog({
   open,
   onClose,
   team,
   onSaved,
 }: TeamFormDialogProps) {
-  const isEditing = team !== null;
-
-  // Initialize state directly from props without useEffect
-  const [name, setName] = useState(team?.name ?? "");
-
   const queryClient = useQueryClient();
 
+  const isEditing = Boolean(team);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<TeamFormValues>({
+    defaultValues: {
+      name: team?.name ?? "",
+    },
+  });
+
+  useEffect(() => {
+    if (open) {
+      reset({
+        name: team?.name ?? "",
+      });
+    }
+  }, [open, team, reset]);
+
   const mutation = useMutation({
-    mutationFn: async () => {
-      const trimmedName = name.trim();
+    mutationFn: async (values: TeamFormValues) => {
+      const name = values.name.trim();
 
-      if (!trimmedName) {
-        throw new Error("Team name is required");
-      }
-
-      if (isEditing) {
+      if (isEditing && team) {
         return teamApi.update(team.id, {
-          name: trimmedName,
+          name,
         });
       }
 
       return teamApi.create({
-        name: trimmedName,
+        name,
       });
     },
 
     onSuccess: () => {
-      toast.add({
-        title: isEditing ? "Team updated" : "Team created",
-        type: "success",
-      });
-
       queryClient.invalidateQueries({
         queryKey: ["teams"],
       });
+
       queryClient.invalidateQueries({
         queryKey: ["dashboard"],
+      });
+
+      toast.add({
+        title: isEditing ? "Team updated" : "Team created",
+        description: isEditing
+          ? "The team was updated successfully."
+          : "The team was created successfully.",
+        type: "success",
       });
 
       onSaved();
@@ -69,81 +102,91 @@ export default function TeamFormDialog({
     onError: (error) => {
       toast.add({
         title: isEditing ? "Failed to update team" : "Failed to create team",
-        description: extractErrorMessage(error),
+        description: extractErrorMessage(error, "Unable to save the team."),
         type: "error",
       });
     },
   });
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (!name.trim()) {
-      toast.add({
-        title: "Team name is required",
-        type: "error",
-      });
-
-      return;
-    }
-
-    mutation.mutate();
-  }
-
-  if (!open) {
-    return null;
+  function onSubmit(values: TeamFormValues) {
+    mutation.mutate(values);
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-      <div className="w-full max-w-md rounded-lg border bg-background p-6 shadow-lg">
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold">
-            {isEditing ? "Edit Team" : "Add Team"}
-          </h2>
+    <Dialog
+      open={open}
+      onOpenChange={(value) => {
+        if (!value && !isSubmitting) {
+          onClose();
+        }
+      }}
+    >
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Users className="size-5" />
+            </div>
 
-          <p className="mt-1 text-sm text-muted-foreground">
-            {isEditing ? "Update the team name." : "Create a new team."}
-          </p>
-        </div>
+            <div>
+              <DialogTitle>
+                {isEditing ? "Edit team" : "Create team"}
+              </DialogTitle>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+              <DialogDescription className="mt-1">
+                {isEditing
+                  ? "Update the team name."
+                  : "Create a new team for your organization."}
+              </DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div className="space-y-2">
-            <label htmlFor="team-name" className="text-sm font-medium">
-              Team name
-            </label>
+            <Label htmlFor="team-name">Team name</Label>
 
             <Input
               id="team-name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
               placeholder="e.g. Development"
-              maxLength={255}
               autoFocus
-              disabled={mutation.isPending}
+              maxLength={255}
+              disabled={isSubmitting}
+              aria-invalid={Boolean(errors.name)}
+              {...register("name", {
+                required: "Team name is required.",
+                validate: (value) =>
+                  value.trim().length > 0 || "Team name is required.",
+              })}
             />
+
+            {errors.name && (
+              <p className="text-xs text-destructive">{errors.name.message}</p>
+            )}
           </div>
 
-          <div className="flex justify-end gap-2">
+          <DialogFooter>
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
-              disabled={mutation.isPending}
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
 
-            <Button type="submit" disabled={mutation.isPending || !name.trim()}>
-              {mutation.isPending
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="size-4 animate-spin" />}
+
+              {isSubmitting
                 ? "Saving..."
                 : isEditing
                   ? "Save changes"
                   : "Create team"}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

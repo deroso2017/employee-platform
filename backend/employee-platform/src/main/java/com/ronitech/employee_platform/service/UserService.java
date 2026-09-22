@@ -7,7 +7,6 @@ import com.ronitech.employee_platform.entity.enums.Role;
 import com.ronitech.employee_platform.exception.ResourceNotFoundException;
 import com.ronitech.employee_platform.mapper.UserMapper;
 import com.ronitech.employee_platform.repository.UserRepository;
-import jakarta.transaction.Transactional;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -90,5 +90,12 @@ public class UserService {
       .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
     user.setRole(newRole);
+  }
+
+  @Transactional(readOnly = true)
+  public Page<RegisterResponse> findLinkable(Pageable pageable) {
+    return userRepository
+      .findByEmployeeIsNullAndRoleNot(Role.ADMIN, pageable)
+      .map(mapper::toResponse);
   }
 }

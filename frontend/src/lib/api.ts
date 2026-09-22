@@ -17,11 +17,14 @@ import type {
   Team,
   User,
   DashboardResponse,
+  Role,
 } from "./types";
 import { useAuth } from "@/context/AuthContext";
 
 const api = axios.create({
   baseURL: "",
+  timeout: 10000, // 10 seconds timeout prevents requests from hanging forever after standby
+  withCredentials: true,
 });
 
 let refreshPromise: Promise<string> | null = null;
@@ -153,6 +156,8 @@ export const employeeApi = {
     api.put<Employee>(
       `/api/employees/${employeeId}/department/${departmentId}`,
     ),
+  linkUser: (employeeId: number, userId: number) =>
+    api.put<Employee>(`/api/employees/${employeeId}/account/${userId}`),
   uploadProfileImage: (employeeId: number, file: File) => {
     const form = new FormData();
     form.append("file", file);
@@ -184,6 +189,15 @@ export const userApi = {
     id: number,
     data: { email: string; password: string; role: string },
   ) => api.put<User>(`/api/users/${id}`, data),
+  changeRole: (id: number, role: Role) =>
+    api.patch(`/api/users/${id}/role`, { role }),
+  getLinkable: (page = 0, size = 100) =>
+    api.get<Page<User>>("/api/users/linkable", {
+      params: {
+        page,
+        size,
+      },
+    }),
   delete: (id: number) => api.delete(`/api/users/${id}`),
 };
 

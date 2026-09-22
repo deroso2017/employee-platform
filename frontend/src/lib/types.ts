@@ -29,6 +29,7 @@ export interface Employee {
   phone?: string;
   profileImage?: string | null;
   department?: Department;
+  userId: number | null;
 }
 
 export interface Department {

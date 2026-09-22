@@ -25,6 +25,12 @@ export const NAV_ITEMS: NavItem[] = [
     roles: ["USER", "MANAGER", "ADMIN"],
   },
   {
+    href: "/users",
+    label: "Users",
+    icon: UserCog,
+    roles: ["ADMIN"],
+  },
+  {
     href: "/employees",
     label: "Employees",
     icon: Users,
@@ -53,11 +59,5 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Tasks",
     icon: CheckSquare,
     roles: ["MANAGER", "ADMIN"],
-  },
-  {
-    href: "/users",
-    label: "Users",
-    icon: UserCog,
-    roles: ["ADMIN"],
   },
 ];

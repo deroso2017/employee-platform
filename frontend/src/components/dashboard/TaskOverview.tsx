@@ -1,7 +1,5 @@
-"use client";
-
 import { CheckSquare } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
 import type { DashboardTaskOverview } from "@/lib/types";
 
 interface TaskOverviewProps {
@@ -11,64 +9,81 @@ interface TaskOverviewProps {
 const statuses = [
   ["TODO", "To do"],
   ["IN_PROGRESS", "In progress"],
-  ["DONE", "Completed"],
+  ["DONE", "Done"],
   ["CANCELLED", "Cancelled"],
 ] as const;
 
 const priorities = [
-  ["URGENT", "Urgent"],
-  ["HIGH", "High"],
-  ["MEDIUM", "Medium"],
   ["LOW", "Low"],
+  ["MEDIUM", "Medium"],
+  ["HIGH", "High"],
+  ["URGENT", "Urgent"],
 ] as const;
 
 export function TaskOverview({ data }: TaskOverviewProps) {
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <CheckSquare className="size-5 text-muted-foreground" />
-          <CardTitle>Task Overview</CardTitle>
+    <section
+      className="
+        rounded-xl
+        border border-border/80
+        bg-card
+        p-5
+        shadow-sm
+      "
+    >
+      <div className="flex items-center gap-3">
+        <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <CheckSquare className="size-4" />
         </div>
-      </CardHeader>
 
-      <CardContent className="space-y-6">
         <div>
-          <p className="mb-3 text-sm font-medium text-muted-foreground">
+          <h2 className="font-semibold tracking-tight">Task overview</h2>
+
+          <p className="text-xs text-muted-foreground">
+            Status and priority distribution
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-6 sm:grid-cols-2">
+        <div>
+          <p className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Status
           </p>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-3">
             {statuses.map(([key, label]) => (
-              <div key={key} className="rounded-lg border bg-muted/20 p-4">
-                <p className="text-xs text-muted-foreground">{label}</p>
+              <div
+                key={key}
+                className="flex items-center justify-between text-sm"
+              >
+                <span className="text-muted-foreground">{label}</span>
 
-                <p className="mt-1 text-2xl font-semibold">
-                  {data.byStatus[key]}
-                </p>
+                <span className="font-medium">{data.byStatus[key] ?? 0}</span>
               </div>
             ))}
           </div>
         </div>
 
         <div>
-          <p className="mb-3 text-sm font-medium text-muted-foreground">
+          <p className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Priority
           </p>
 
           <div className="space-y-3">
             {priorities.map(([key, label]) => (
-              <div key={key} className="flex items-center justify-between">
-                <span className="text-sm">{label}</span>
+              <div
+                key={key}
+                className="flex items-center justify-between text-sm"
+              >
+                <span className="text-muted-foreground">{label}</span>
 
-                <span className="text-sm font-semibold">
-                  {data.byPriority[key]}
-                </span>
+                <span className="font-medium">{data.byPriority[key] ?? 0}</span>
               </div>
             ))}
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }

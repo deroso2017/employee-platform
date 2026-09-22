@@ -21,8 +21,13 @@ public class UserController {
   private final UserService service;
 
   @GetMapping
-  public Page<RegisterResponse> getEmployees(Pageable pageable) {
+  public Page<RegisterResponse> getUsers(Pageable pageable) {
     return service.findAll(pageable);
+  }
+
+  @GetMapping("/linkable")
+  public Page<RegisterResponse> getLinkableUsers(Pageable pageable) {
+    return service.findLinkable(pageable);
   }
 
   @GetMapping("/{id}")
@@ -31,7 +36,7 @@ public class UserController {
   }
 
   @PutMapping("/{id}")
-  public RegisterResponse updateEmployee(
+  public RegisterResponse updateUser(
     @PathVariable Long id,
     @Valid @RequestBody RegisterRequest request
   ) {
