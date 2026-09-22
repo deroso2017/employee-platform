@@ -3,6 +3,8 @@ package com.ronitech.employee_platform.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 @Entity
 @Table(name = "employees")
@@ -25,6 +27,8 @@ public class Employee {
 
   private String profileImageContentType;
 
+  @EqualsAndHashCode.Exclude
+  @ToString.Exclude
   @OneToOne(mappedBy = "employee", fetch = FetchType.LAZY)
   private User user;
 

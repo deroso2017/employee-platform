@@ -1,6 +1,5 @@
 package com.ronitech.employee_platform.controller;
 
-import com.ronitech.employee_platform.dto.auth.ChangeRoleRequest;
 import com.ronitech.employee_platform.dto.auth.LoginRequest;
 import com.ronitech.employee_platform.dto.auth.LoginResponse;
 import com.ronitech.employee_platform.dto.auth.LogoutRequest;

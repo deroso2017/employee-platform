@@ -2,13 +2,22 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { FolderKanban, Users } from "lucide-react";
 
 import { projectApi, teamApi } from "@/lib/api";
-
 import type { Project, ProjectStatus } from "@/lib/types";
 
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
 import { extractErrorMessage } from "@/lib/errors";
 import { Spinner } from "@/components/ui/spinner";
@@ -50,7 +59,6 @@ export default function ProjectFormDialog({
 }: ProjectFormDialogProps) {
   const isEditing = project !== null;
 
-  // Initialize state directly from props instead of using useEffect
   const [name, setName] = useState(project?.name ?? "");
   const [description, setDescription] = useState(project?.description ?? "");
   const [status, setStatus] = useState<ProjectStatus>(
@@ -109,6 +117,7 @@ export default function ProjectFormDialog({
       queryClient.invalidateQueries({
         queryKey: ["projects"],
       });
+
       queryClient.invalidateQueries({
         queryKey: ["dashboard"],
       });
@@ -152,122 +161,189 @@ export default function ProjectFormDialog({
     mutation.mutate();
   }
 
-  if (!open) {
-    return null;
-  }
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-      <div className="w-full max-w-lg rounded-lg border bg-background p-6 shadow-lg">
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold">
-            {isEditing ? "Edit Project" : "Add Project"}
-          </h2>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen && !mutation.isPending) {
+          onClose();
+        }
+      }}
+    >
+      <DialogContent className="max-w-2xl overflow-hidden p-0">
+        {/* Header */}
+        <div className="border-b border-border px-6 py-5">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+              <FolderKanban className="h-5 w-5 text-primary" />
+            </div>
 
-          <p className="mt-1 text-sm text-muted-foreground">
-            {isEditing
-              ? "Update the project details."
-              : "Create a new project."}
-          </p>
+            <div className="min-w-0">
+              <h2 className="text-lg font-semibold tracking-tight">
+                {isEditing ? "Edit project" : "Create project"}
+              </h2>
+
+              <p className="mt-1 text-sm text-muted-foreground">
+                {isEditing
+                  ? "Update the project information and configuration."
+                  : "Create a project and assign it to a team."}
+              </p>
+            </div>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="space-y-2">
-            <label htmlFor="project-name" className="text-sm font-medium">
-              Project name
-            </label>
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-6 px-6 py-6">
+            {/* Project details */}
+            <section className="space-y-4">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">
+                  Project details
+                </h3>
 
-            <Input
-              id="project-name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="e.g. Employee Platform"
-              maxLength={255}
-              autoFocus
-              disabled={mutation.isPending}
-            />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Basic information about the project.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="project-name">Project name</Label>
+
+                <Input
+                  id="project-name"
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  placeholder="e.g. Employee Platform"
+                  maxLength={255}
+                  autoFocus
+                  disabled={mutation.isPending}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="project-description">Description</Label>
+
+                <textarea
+                  id="project-description"
+                  value={description}
+                  onChange={(event) => setDescription(event.target.value)}
+                  placeholder="Describe the project..."
+                  maxLength={2000}
+                  rows={4}
+                  disabled={mutation.isPending}
+                  className="flex min-h-24 w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm outline-none placeholder:text-muted-foreground transition-colors focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                />
+
+                <div className="flex justify-end text-xs text-muted-foreground">
+                  {description.length}/2000
+                </div>
+              </div>
+            </section>
+
+            {/* Configuration */}
+            <section className="space-y-4">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">
+                  Configuration
+                </h3>
+
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Assign the project to a team and set its current status.
+                </p>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="project-team">Team</Label>
+
+                  <Select
+                    value={teamId}
+                    onValueChange={(value) => {
+                      setTeamId(value ?? "");
+                    }}
+                    disabled={teamsLoading || mutation.isPending}
+                  >
+                    <SelectTrigger id="project-team" className="w-full">
+                      <SelectValue placeholder="Select team..." />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      {teams.map((team) => (
+                        <SelectItem key={team.id} value={String(team.id)}>
+                          <div className="flex items-center gap-2">
+                            <Users className="h-4 w-4 text-muted-foreground" />
+                            {team.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {teamsLoading && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Spinner className="size-3.5" />
+                      Loading teams...
+                    </div>
+                  )}
+
+                  {!teamsLoading && teams.length === 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Create a team before creating a project.
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="project-status">Status</Label>
+
+                  <Select
+                    value={status}
+                    onValueChange={(value) => {
+                      if (value) {
+                        setStatus(value as ProjectStatus);
+                      }
+                    }}
+                    disabled={mutation.isPending}
+                  >
+                    <SelectTrigger id="project-status" className="w-full">
+                      <SelectValue placeholder="Select status..." />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      {STATUS_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </section>
+
+            {/* Manager information */}
+            <div className="rounded-lg border border-primary/15 bg-primary/5 px-4 py-3">
+              <div className="flex gap-3">
+                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10">
+                  <FolderKanban className="h-4 w-4 text-primary" />
+                </div>
+
+                <div>
+                  <p className="text-sm font-medium text-foreground">
+                    Project manager
+                  </p>
+
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                    The project manager is automatically assigned from the
+                    currently authenticated manager account.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <label
-              htmlFor="project-description"
-              className="text-sm font-medium"
-            >
-              Description
-            </label>
-
-            <textarea
-              id="project-description"
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              placeholder="Describe the project..."
-              maxLength={2000}
-              rows={4}
-              disabled={mutation.isPending}
-              className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="project-team" className="text-sm font-medium">
-              Team
-            </label>
-
-            <select
-              id="project-team"
-              value={teamId}
-              onChange={(event) => setTeamId(event.target.value)}
-              disabled={teamsLoading || mutation.isPending}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            >
-              <option value="">
-                {teamsLoading ? "Loading teams..." : "Select team..."}
-              </option>
-
-              {teams.map((team) => (
-                <option key={team.id} value={team.id}>
-                  {team.name}
-                </option>
-              ))}
-            </select>
-
-            {teamsLoading && <Spinner className="size-4" />}
-
-            {!teamsLoading && teams.length === 0 && (
-              <p className="text-xs text-muted-foreground">
-                Create a team before creating a project.
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="project-status" className="text-sm font-medium">
-              Status
-            </label>
-
-            <select
-              id="project-status"
-              value={status}
-              onChange={(event) =>
-                setStatus(event.target.value as ProjectStatus)
-              }
-              disabled={mutation.isPending}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            >
-              {STATUS_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="rounded-md bg-muted/50 p-3 text-sm text-muted-foreground">
-            The project manager is automatically assigned from the currently
-            authenticated manager account.
-          </div>
-
-          <div className="flex justify-end gap-2">
+          {/* Footer */}
+          <div className="flex flex-col-reverse gap-2 border-t border-border bg-muted/20 px-6 py-4 sm:flex-row sm:justify-end">
             <Button
               type="button"
               variant="outline"
@@ -291,7 +367,7 @@ export default function ProjectFormDialog({
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

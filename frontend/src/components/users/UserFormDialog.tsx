@@ -6,8 +6,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { UserForm } from "./UserForm";
-import { User } from "@/lib/types";
+
+import { UserForm } from "@/components/users/UserForm";
+import type { User } from "@/lib/types";
 
 interface UserFormDialogProps {
   open: boolean;
@@ -24,10 +25,11 @@ export default function UserFormDialog({
 }: UserFormDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[520px]">
         <DialogHeader>
-          <DialogTitle>{user ? "Edit User" : "New User"}</DialogTitle>
+          <DialogTitle>{user ? "Edit user" : "Create user"}</DialogTitle>
         </DialogHeader>
+
         {open && (
           <UserForm
             key={`${user?.id ?? "new"}-${open}`}

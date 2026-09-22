@@ -7,8 +7,12 @@ import com.ronitech.employee_platform.entity.Department;
 import com.ronitech.employee_platform.entity.Employee;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
 
-@Mapper(componentModel = "spring")
+@Mapper(
+  componentModel = "spring",
+  unmappedTargetPolicy = ReportingPolicy.IGNORE
+)
 public interface EmployeeMapper {
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "department", ignore = true)

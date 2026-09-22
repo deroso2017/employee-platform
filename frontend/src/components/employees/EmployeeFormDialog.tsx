@@ -1,53 +1,77 @@
 "use client";
 
-import { departmentApi } from "@/lib/api";
-import type { Employee } from "@/lib/types";
+import { useQuery } from "@tanstack/react-query";
+
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useQuery } from "@tanstack/react-query";
+
+import { departmentApi } from "@/lib/api";
+import type { Department, Employee } from "@/lib/types";
+
 import { EmployeeForm } from "./EmployeeForm";
 
 interface EmployeeFormDialogProps {
   open: boolean;
-  onClose: () => void;
-  onSaved: () => void;
+  onOpenChange: (open: boolean) => void;
   employee?: Employee | null;
 }
 
-// ---------------------------------------------------------------------------
-// Outer shell — fetches departments and remounts the form via key.
-// ---------------------------------------------------------------------------
-export default function EmployeeFormDialog({
+export function EmployeeFormDialog({
   open,
-  onClose,
-  onSaved,
+  onOpenChange,
   employee,
 }: EmployeeFormDialogProps) {
-  const { data: departments = [] } = useQuery({
-    queryKey: ["departments"],
-    queryFn: () => departmentApi.getAll().then((r) => r.data),
-    enabled: open,
-  });
+  const { data: departmentsResponse, isLoading: departmentsLoading } = useQuery(
+    {
+      queryKey: ["departments"],
+      queryFn: () => departmentApi.getAll(),
+      enabled: open,
+    },
+  );
+
+  const departments: Department[] = departmentsResponse?.data ?? [];
+
+  const isEditing = Boolean(employee);
+
+  function handleClose() {
+    onOpenChange(false);
+  }
+
+  function handleSaved() {
+    onOpenChange(false);
+  }
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
-            {employee ? "Edit Employee" : "New Employee"}
+            {isEditing ? "Edit employee" : "Create employee"}
           </DialogTitle>
+
+          <DialogDescription>
+            {isEditing
+              ? "Update the employee information and profile."
+              : "Add a new employee to your organization."}
+          </DialogDescription>
         </DialogHeader>
-        {open && (
+
+        {departmentsLoading ? (
+          <div className="flex min-h-48 items-center justify-center">
+            <div className="size-6 animate-spin rounded-full border-2 border-muted border-t-primary" />
+          </div>
+        ) : (
           <EmployeeForm
-            key={`${employee?.id ?? "new"}-${open}`}
+            key={employee?.id ?? "create"}
             employee={employee}
             departments={departments}
-            onClose={onClose}
-            onSaved={onSaved}
+            onClose={handleClose}
+            onSaved={handleSaved}
           />
         )}
       </DialogContent>

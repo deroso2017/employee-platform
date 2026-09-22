@@ -99,7 +99,7 @@ public class EmployeeController {
       .body(file.data());
   }
 
-  @PostMapping("/{employeeId}/account/{userId}")
+  @PutMapping("/{employeeId}/account/{userId}")
   @PreAuthorize("hasAuthority('ADMIN')")
   public EmployeeResponse linkUser(
     @PathVariable Long employeeId,
