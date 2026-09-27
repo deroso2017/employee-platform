@@ -10,6 +10,8 @@ import {
   Trash2,
 } from "lucide-react";
 
+import { useRouter } from "next/navigation";
+
 import { projectApi } from "@/lib/api";
 import type { Project, ProjectStatus } from "@/lib/types";
 import { useAuth } from "@/context/AuthContext";
@@ -73,6 +75,8 @@ export function Projects() {
   const { user, loading } = useAuth();
   const queryClient = useQueryClient();
 
+  const router = useRouter();
+
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
 
@@ -124,6 +128,10 @@ export function Projects() {
       });
     },
   });
+
+  function openProject(projectId: number) {
+    router.push(`/projects/${projectId}`);
+  }
 
   function openCreate() {
     setEditingProject(null);
@@ -244,7 +252,8 @@ export function Projects() {
                 {projects.map((project) => (
                   <TableRow
                     key={project.id}
-                    className="group transition-colors"
+                    className="group transition-colors cursor-pointer hover:opacity-70"
+                    onClick={() => openProject(project.id)}
                   >
                     <TableCell className="pl-6">
                       <div className="min-w-0">
@@ -280,14 +289,20 @@ export function Projects() {
                       <TableCell className="pr-6 text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-transparent text-muted-foreground transition-colors hover:border-border hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            className="inline-flex cursor-pointer h-8 w-8 items-center justify-center rounded-md border border-transparent text-muted-foreground transition-colors hover:border-border hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             aria-label={`Actions for ${project.name}`}
+                            onClick={(e) => e.stopPropagation()}
                           >
                             <MoreHorizontal className="h-4 w-4" />
                           </DropdownMenuTrigger>
 
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => openEdit(project)}>
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                openEdit(project);
+                                e.stopPropagation();
+                              }}
+                            >
                               <Pencil className="mr-2 h-4 w-4" />
                               Edit
                             </DropdownMenuItem>
@@ -296,7 +311,10 @@ export function Projects() {
 
                             <DropdownMenuItem
                               variant="destructive"
-                              onClick={() => openDelete(project)}
+                              onClick={(e) => {
+                                openDelete(project);
+                                e.stopPropagation();
+                              }}
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
                               Delete

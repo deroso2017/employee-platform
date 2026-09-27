@@ -4,10 +4,6 @@ export function DashboardSkeleton() {
   return (
     <PageContainer>
       <div className="animate-pulse">
-        <div className="h-8 w-40 rounded-md bg-muted" />
-
-        <div className="mt-2 h-4 w-96 max-w-full rounded bg-muted" />
-
         <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
           {Array.from({ length: 5 }).map((_, index) => (
             <div

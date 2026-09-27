@@ -21,7 +21,7 @@ export default function DashboardPage() {
           actions={<RefreshButton queryKey="dashboard"></RefreshButton>}
         />
 
-        <Dashboard userEmail={user?.email} />
+        <Dashboard />
       </PageContainer>
     </div>
   );

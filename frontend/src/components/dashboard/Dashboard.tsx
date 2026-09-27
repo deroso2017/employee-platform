@@ -15,13 +15,10 @@ import { ProjectOverview } from "@/components/dashboard/ProjectOverview";
 import { TaskOverview } from "@/components/dashboard/TaskOverview";
 import { MyTasks } from "@/components/dashboard/MyTasks";
 import { RecentProjects } from "@/components/dashboard/RecentProjects";
+import { DashboardSkeleton } from "./DashboardSkeleton";
 
-interface DashboardProps {
-  userEmail?: string;
-}
-
-export function Dashboard({ userEmail }: DashboardProps) {
-  const { data, isLoading, isError } = useQuery({
+export function Dashboard() {
+  const { data, isLoading, isFetching, isError } = useQuery({
     queryKey: ["dashboard"],
     queryFn: async () => {
       const response = await dashboardApi.get();
@@ -30,7 +27,7 @@ export function Dashboard({ userEmail }: DashboardProps) {
     staleTime: 30_000,
   });
 
-  if (isLoading) {
+  if (isLoading || isFetching) {
     return <DashboardSkeleton />;
   }
 
@@ -50,7 +47,7 @@ export function Dashboard({ userEmail }: DashboardProps) {
 
   return (
     <div className="space-y-8">
-      {/* KPI cards */}
+      {/* Key Performance Indicator cards */}
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <DashboardKpiCard
           title="Employees"
@@ -93,26 +90,6 @@ export function Dashboard({ userEmail }: DashboardProps) {
         <RecentProjects projects={data.recentProjects} />
 
         <MyTasks tasks={data.myTasks} />
-      </section>
-    </div>
-  );
-}
-
-function DashboardSkeleton() {
-  return (
-    <div className="space-y-8">
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, index) => (
-          <div
-            key={index}
-            className="h-32 animate-pulse rounded-xl border bg-muted/40"
-          />
-        ))}
-      </section>
-
-      <section className="grid gap-6 lg:grid-cols-2">
-        <div className="h-80 animate-pulse rounded-xl border bg-muted/40" />
-        <div className="h-80 animate-pulse rounded-xl border bg-muted/40" />
       </section>
     </div>
   );
