@@ -41,6 +41,7 @@ import { extractErrorMessage } from "@/lib/errors";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useProfileImage } from "@/lib/hooks/useProfileImage";
 import { LinkUserDialog } from "./LinkUserDialog";
+import { EmployeesSkeleton } from "./EmployeesSkeleton";
 
 const DEFAULT_AVATAR = "/default-avatar.svg";
 
@@ -179,6 +180,8 @@ export function Employees({ onEdit, onAdd }: EmployeesProps) {
 
   const hasActions = canEdit || canDelete;
 
+  if (isLoading) return <EmployeesSkeleton />;
+
   return (
     <>
       <section className="space-y-4">
@@ -262,40 +265,7 @@ export function Employees({ onEdit, onAdd }: EmployeesProps) {
             </TableHeader>
 
             <TableBody>
-              {isLoading ? (
-                Array.from({ length: 6 }).map((_, index) => (
-                  <TableRow key={index}>
-                    <TableCell>
-                      <div className="size-10 animate-pulse rounded-full bg-muted" />
-                    </TableCell>
-
-                    <TableCell>
-                      <div className="space-y-2">
-                        <div className="h-4 w-32 animate-pulse rounded bg-muted" />
-                        <div className="h-3 w-16 animate-pulse rounded bg-muted" />
-                      </div>
-                    </TableCell>
-
-                    <TableCell>
-                      <div className="h-4 w-40 animate-pulse rounded bg-muted" />
-                    </TableCell>
-
-                    <TableCell>
-                      <div className="h-6 w-24 animate-pulse rounded-md bg-muted" />
-                    </TableCell>
-
-                    <TableCell>
-                      <div className="h-5 w-16 animate-pulse rounded bg-muted" />
-                    </TableCell>
-
-                    {hasActions && (
-                      <TableCell>
-                        <div className="size-8 animate-pulse rounded-md bg-muted" />
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))
-              ) : employees.length === 0 ? (
+              {employees.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={hasActions ? 6 : 5} className="h-72">
                     <div className="flex flex-col items-center justify-center px-6 text-center">
