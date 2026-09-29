@@ -131,6 +131,8 @@ export const authApi = {
     }),
   register: (email: string, password: string) =>
     api.post("/api/auth/register", { email, password }),
+  changePassword: (currentPassword: string, newPassword: string) =>
+    api.post("/api/auth/change-password", { currentPassword, newPassword }),
 };
 
 // Employees

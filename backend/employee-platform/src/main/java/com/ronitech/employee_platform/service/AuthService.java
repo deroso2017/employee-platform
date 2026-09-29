@@ -1,5 +1,6 @@
 package com.ronitech.employee_platform.service;
 
+import com.ronitech.employee_platform.dto.auth.ChangePasswordRequest;
 import com.ronitech.employee_platform.dto.auth.LoginRequest;
 import com.ronitech.employee_platform.dto.auth.LoginResponse;
 import com.ronitech.employee_platform.dto.auth.LogoutRequest;
@@ -20,6 +21,7 @@ import com.ronitech.employee_platform.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -123,5 +125,26 @@ public class AuthService {
     user.setPassword(passwordEncoder.encode(request.newPassword()));
 
     resetToken.markAsUsed();
+  }
+
+  @Transactional
+  public void changePassword(User principal, ChangePasswordRequest request) {
+    User user = repository
+      .findById(principal.getId())
+      .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+    if (
+      !passwordEncoder.matches(request.currentPassword(), user.getPassword())
+    ) {
+      throw new org.springframework.security.authentication.BadCredentialsException(
+        "Current password is incorrect"
+      );
+    }
+
+    user.setPassword(passwordEncoder.encode(request.newPassword()));
+
+    // Revoke all existing refresh tokens
+    // so the user is logged out of other devices/sessions upon password change
+    refreshTokenService.revokeAll(user);
   }
 }
