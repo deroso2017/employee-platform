@@ -4,6 +4,11 @@ spring:
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-test-query: SELECT 1
+      connection-timeout: 5000
+      keepalive-time: 30000
+      max-lifetime: 600000
 
   flyway:
     enabled: true
@@ -33,6 +38,14 @@ spring:
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USERNAME:guest}
     password: ${RABBITMQ_PASSWORD:guest}
+    listener:
+      simple:
+        retry:
+          enabled: true
+          initial-interval: 3000
+          max-interval: 60000
+          multiplier: 2.0
+          max-retries: 4
 
   mail:
     host: ${MAIL_HOST}

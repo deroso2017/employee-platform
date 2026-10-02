@@ -27,6 +27,8 @@ export interface Employee {
   lastName: string;
   email: string;
   phone?: string;
+  jobTitle?: string;
+  employeeNumber?: string;
   profileImage?: string | null;
   department?: Department;
   userId: number | null;
@@ -103,4 +105,16 @@ export interface Page<T> {
   totalPages: number;
   number: number;
   size: number;
+}
+
+export interface UserProfile {
+  id: number;
+  email: string;
+  role: string;
+  employee: Employee | null;
+}
+
+export interface ChangePasswordInput {
+  currentPassword: string;
+  newPassword: string;
 }
