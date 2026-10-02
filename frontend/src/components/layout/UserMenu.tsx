@@ -84,10 +84,10 @@ export function UserMenu() {
             Profile
           </DropdownMenuItem>
 
-          <DropdownMenuItem onClick={() => router.push("/settings")}>
+          {/* <DropdownMenuItem onClick={() => router.push("/settings")}>
             <Settings className="mr-2 size-4" />
             Settings
-          </DropdownMenuItem>
+          </DropdownMenuItem> */}
         </DropdownMenuGroup>
 
         <DropdownMenuSeparator />
