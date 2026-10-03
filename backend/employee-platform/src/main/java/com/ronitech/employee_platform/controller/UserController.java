@@ -25,7 +25,7 @@ public class UserController {
   public RegisterResponse createUser(
     @Valid @RequestBody CreateUserRequest request
   ) {
-    return service.createUser(request);
+    return service.create(request);
   }
 
   @GetMapping

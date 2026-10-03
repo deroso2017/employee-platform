@@ -64,7 +64,7 @@ public class UserService {
     return response;
   }
 
-  public RegisterResponse createUser(CreateUserRequest request) {
+  public RegisterResponse create(CreateUserRequest request) {
     if (userRepository.findByEmail(request.email()).isPresent()) {
       throw new IllegalArgumentException(
         "A user with this email already exists."
