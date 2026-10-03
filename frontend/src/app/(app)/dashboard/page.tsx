@@ -1,7 +1,6 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import Navbar from "@/components/layout/Navbar";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Dashboard } from "@/components/dashboard/Dashboard";
@@ -12,8 +11,6 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-muted/20">
-      <Navbar />
-
       <PageContainer>
         <PageHeader
           title={`Welcome back${user?.email ? `, ${user.email}` : ""}`}

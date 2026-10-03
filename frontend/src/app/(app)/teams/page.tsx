@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-
-import Navbar from "@/components/layout/Navbar";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -48,8 +46,6 @@ export default function TeamsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-
       <PageContainer>
         <PageHeader
           title="Teams"

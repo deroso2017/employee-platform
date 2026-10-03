@@ -1,6 +1,5 @@
 "use client";
 
-import Navbar from "@/components/layout/Navbar";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Tasks } from "@/components/tasks/Tasks";
@@ -18,8 +17,6 @@ export default function TasksPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-
       <PageContainer>
         <PageHeader
           title="Tasks"

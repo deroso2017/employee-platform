@@ -9,8 +9,6 @@ import { RefreshButton } from "@/components/ui/RefreshButton";
 export default function ProjectsPage() {
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-
       <PageContainer>
         <PageHeader
           title="Projects"
