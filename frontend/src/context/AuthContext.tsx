@@ -46,7 +46,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await persistRefreshToken(data.refreshToken);
         setUser(getCurrentUser());
       } catch {
-        // No valid session — user needs to log in
+        // No valid session — clean up and redirect to login
+        clearAccessToken();
+        setUser(null);
+        window.location.href = "/login";
       } finally {
         markAuthInitialized();
         setAuthInitializedState(true);
