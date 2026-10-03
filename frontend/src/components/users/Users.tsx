@@ -49,7 +49,7 @@ interface UsersProps {
 }
 
 export function Users({ createOpen, onCreateOpenChange }: UsersProps) {
-  const { user, loading } = useAuth();
+  const { loading } = useAuth();
   const queryClient = useQueryClient();
 
   const [page, setPage] = useState(0);

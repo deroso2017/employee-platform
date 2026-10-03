@@ -1,5 +1,6 @@
 package com.ronitech.employee_platform.service;
 
+import com.ronitech.employee_platform.dto.CreateUserRequest;
 import com.ronitech.employee_platform.dto.auth.RegisterRequest;
 import com.ronitech.employee_platform.dto.auth.RegisterResponse;
 import com.ronitech.employee_platform.entity.User;
@@ -13,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +27,7 @@ public class UserService {
   private final UserRepository userRepository;
   private final UserMapper mapper;
   private final RedisTemplate<String, Object> redisTemplate;
+  private final PasswordEncoder passwordEncoder;
 
   private String userCacheKey(Long id) {
     return "user:" + id;
@@ -61,6 +64,23 @@ public class UserService {
     return response;
   }
 
+  public RegisterResponse createUser(CreateUserRequest request) {
+    if (userRepository.findByEmail(request.email()).isPresent()) {
+      throw new IllegalArgumentException(
+        "A user with this email already exists."
+      );
+    }
+
+    User user = new User();
+    user.setEmail(request.email());
+    user.setPassword(passwordEncoder.encode(request.password()));
+    user.setRole(request.role());
+
+    User savedUser = userRepository.save(user);
+
+    return mapper.toResponse(savedUser);
+  }
+
   public RegisterResponse update(Long id, RegisterRequest request) {
     User user = userRepository
       .findById(id)
@@ -76,6 +96,17 @@ public class UserService {
     redisTemplate.delete(userCacheKey(id));
 
     return response;
+  }
+
+  public void delete(Long id) {
+    if (!userRepository.existsById(id)) {
+      log.warn("User not found for deletion: {}", id);
+      throw new ResourceNotFoundException("User not found with id: " + id);
+    }
+
+    userRepository.deleteById(id);
+    redisTemplate.delete(userCacheKey(id));
+    log.info("Deleted user with id: {}", id);
   }
 
   public Page<RegisterResponse> search(String email, Pageable pageable) {

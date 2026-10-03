@@ -23,11 +23,13 @@ export default function UserFormDialog({
   onSaved,
   user,
 }: UserFormDialogProps) {
+  const isEditMode = Boolean(user);
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[520px]">
         <DialogHeader>
-          <DialogTitle>{user ? "Edit user" : "Create user"}</DialogTitle>
+          <DialogTitle>{isEditMode ? "Edit user" : "Add user"}</DialogTitle>
         </DialogHeader>
 
         {open && (

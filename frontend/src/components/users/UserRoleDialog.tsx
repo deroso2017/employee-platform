@@ -111,7 +111,7 @@ export function UserRoleDialog({
             <Label htmlFor="user-role">Role</Label>
 
             <Select value={role} onValueChange={handleRoleChange}>
-              <SelectTrigger id="user-role">
+              <SelectTrigger id="user-role" className="w-full">
                 <SelectValue placeholder="Select a role" />
               </SelectTrigger>
 
