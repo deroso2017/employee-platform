@@ -27,7 +27,9 @@ const api = axios.create({
 
 let refreshPromise: Promise<string> | null = null;
 let _authInitialized = false;
-export function setAuthInitialized() { _authInitialized = true; }
+export function setAuthInitialized() {
+  _authInitialized = true;
+}
 
 function doRefresh(): Promise<string> {
   if (!refreshPromise) {
@@ -184,9 +186,11 @@ export const userApi = {
         page,
       },
     }),
+  create: (data: { email: string; password: string; role: string }) =>
+    api.post<User>("/api/users", data),
   update: (
     id: number,
-    data: { email: string; password: string; role: string },
+    data: { email: string; password?: string; role: string },
   ) => api.put<User>(`/api/users/${id}`, data),
   changeRole: (id: number, role: Role) =>
     api.patch(`/api/users/${id}/role`, { role }),

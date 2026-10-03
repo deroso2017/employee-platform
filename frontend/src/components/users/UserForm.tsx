@@ -5,7 +5,6 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { userSchema, type UserFormValues } from "@/lib/schemas";
-
 import { userApi } from "@/lib/api";
 import type { User } from "@/lib/types";
 import { extractErrorMessage } from "@/lib/errors";
@@ -33,6 +32,8 @@ interface UserFormProps {
 export function UserForm({ user, onClose, onSaved }: UserFormProps) {
   const [serverError, setServerError] = useState("");
 
+  const isEditMode = Boolean(user);
+
   const {
     register,
     handleSubmit,
@@ -42,8 +43,8 @@ export function UserForm({ user, onClose, onSaved }: UserFormProps) {
     resolver: zodResolver(userSchema),
     defaultValues: {
       email: user?.email ?? "",
-      password: user?.password ?? "",
-      role: user?.role ?? "",
+      password: "",
+      role: user?.role ?? "USER",
     },
   });
 
@@ -54,6 +55,12 @@ export function UserForm({ user, onClose, onSaved }: UserFormProps) {
       if (user) {
         await userApi.update(user.id, {
           email: values.email,
+          ...(values.password ? { password: values.password } : {}),
+          role: values.role,
+        });
+      } else {
+        await userApi.create({
+          email: values.email,
           password: values.password,
           role: values.role,
         });
@@ -62,7 +69,12 @@ export function UserForm({ user, onClose, onSaved }: UserFormProps) {
       onSaved();
       onClose();
     } catch (error) {
-      setServerError(extractErrorMessage(error, "Failed to save user."));
+      setServerError(
+        extractErrorMessage(
+          error,
+          isEditMode ? "Failed to update user." : "Failed to create user.",
+        ),
+      );
     }
   }
 
@@ -74,10 +86,13 @@ export function UserForm({ user, onClose, onSaved }: UserFormProps) {
           <h3 className="text-sm font-semibold">Account information</h3>
 
           <p className="mt-1 text-xs text-muted-foreground">
-            Update the user&apos;s account details and access role.
+            {isEditMode
+              ? "Update the user's account details and access role."
+              : "Create an account and assign an access role."}
           </p>
         </div>
 
+        {/* Email */}
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
 
@@ -94,18 +109,44 @@ export function UserForm({ user, onClose, onSaved }: UserFormProps) {
           )}
         </div>
 
-        {/* <div className="space-y-2">
+        {/* Password */}
+        <div className="space-y-2">
+          <Label htmlFor="password">Password {isEditMode && "*"}</Label>
+
+          <Input
+            id="password"
+            type="password"
+            placeholder={
+              isEditMode
+                ? "Leave blank to keep current password"
+                : "Enter a temporary password"
+            }
+            aria-invalid={Boolean(errors.password)}
+            {...register("password")}
+          />
+
+          {errors.password && (
+            <p className="text-sm text-destructive">
+              {errors.password.message}
+            </p>
+          )}
+
+          {isEditMode && (
+            <p className="text-xs text-muted-foreground">
+              Leave blank if you do not want to change the password.
+            </p>
+          )}
+        </div>
+
+        {/* Role */}
+        <div className="space-y-2">
           <Label htmlFor="role">Role</Label>
 
           <Controller
             name="role"
             control={control}
             render={({ field }) => (
-              <Select
-                disabled
-                value={field.value ?? ""}
-                onValueChange={(value) => field.onChange(value ?? "")}
-              >
+              <Select value={field.value ?? ""} onValueChange={field.onChange}>
                 <SelectTrigger id="role" className="w-full">
                   <SelectValue placeholder="Select a role" />
                 </SelectTrigger>
@@ -126,9 +167,10 @@ export function UserForm({ user, onClose, onSaved }: UserFormProps) {
           )}
 
           <p className="text-xs text-muted-foreground">
-            User roles cannot currently be changed from this form.
+            The role determines which parts of the application the user can
+            access.
           </p>
-        </div> */}
+        </div>
       </section>
 
       {serverError && (
@@ -149,7 +191,13 @@ export function UserForm({ user, onClose, onSaved }: UserFormProps) {
         </Button>
 
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Saving..." : "Save changes"}
+          {isSubmitting
+            ? isEditMode
+              ? "Saving..."
+              : "Creating..."
+            : isEditMode
+              ? "Save changes"
+              : "Create user"}
         </Button>
       </div>
     </form>

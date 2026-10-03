@@ -1,5 +1,6 @@
 package com.ronitech.employee_platform.controller;
 
+import com.ronitech.employee_platform.dto.CreateUserRequest;
 import com.ronitech.employee_platform.dto.auth.ChangeRoleRequest;
 import com.ronitech.employee_platform.dto.auth.RegisterRequest;
 import com.ronitech.employee_platform.dto.auth.RegisterResponse;
@@ -19,6 +20,13 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
   private final UserService service;
+
+  @PostMapping
+  public RegisterResponse createUser(
+    @Valid @RequestBody CreateUserRequest request
+  ) {
+    return service.createUser(request);
+  }
 
   @GetMapping
   public Page<RegisterResponse> getUsers(Pageable pageable) {
@@ -41,6 +49,11 @@ public class UserController {
     @Valid @RequestBody RegisterRequest request
   ) {
     return service.update(id, request);
+  }
+
+  @DeleteMapping("/{id}")
+  public void deleteUser(@PathVariable Long id) {
+    service.delete(id);
   }
 
   @GetMapping("/search")
