@@ -19,8 +19,6 @@ import type {
   DashboardResponse,
   Role,
 } from "./types";
-import { useAuth } from "@/context/AuthContext";
-
 const api = axios.create({
   baseURL: "",
   timeout: 10000, // 10 seconds timeout prevents requests from hanging forever after standby
@@ -28,6 +26,8 @@ const api = axios.create({
 });
 
 let refreshPromise: Promise<string> | null = null;
+let _authInitialized = false;
+export function setAuthInitialized() { _authInitialized = true; }
 
 function doRefresh(): Promise<string> {
   if (!refreshPromise) {
@@ -69,14 +69,11 @@ api.interceptors.request.use(async (config) => {
   }
 
   if (isAccessTokenExpired()) {
-    const { authInitialized } = useAuth();
     try {
       const newToken = await doRefresh();
       config.headers.Authorization = `Bearer ${newToken}`;
     } catch {
-      // Only treat this as a dead session if auth has already initialized.
-      // During startup, the token is simply not loaded yet — not expired.
-      if (authInitialized) {
+      if (_authInitialized) {
         clearAccessToken();
         window.dispatchEvent(new Event("auth:logout"));
         return Promise.reject(new Error("Session expired"));

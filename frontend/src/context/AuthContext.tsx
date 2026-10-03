@@ -13,7 +13,7 @@ import {
   persistRefreshToken,
   getCurrentUser,
 } from "@/lib/auth";
-import { authApi } from "@/lib/api";
+import { authApi, setAuthInitialized as markAuthInitialized } from "@/lib/api";
 import type { User } from "@/lib/types";
 import { useRouter } from "next/navigation";
 
@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Tracks whether the initial session restore has completed.
   // Used by the Axios interceptor to avoid dispatching auth:logout
   // before AuthContext has had a chance to load the access token.
-  const [authInitialized, setAuthInitialized] = useState(false);
+  const [authInitialized, setAuthInitializedState] = useState(false);
   const router = useRouter();
 
   // On mount: try to restore session by silently refreshing via httpOnly cookie
@@ -46,9 +46,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await persistRefreshToken(data.refreshToken);
         setUser(getCurrentUser());
       } catch {
-        // No valid session — user needs to log in
+        // No valid session — clean up and redirect to login
+        clearAccessToken();
+        setUser(null);
+        window.location.href = "/login";
       } finally {
-        setAuthInitialized(true);
+        markAuthInitialized();
+        setAuthInitializedState(true);
         setLoading(false);
       }
     })();
