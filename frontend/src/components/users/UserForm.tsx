@@ -4,7 +4,11 @@ import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { userSchema, type UserFormValues } from "@/lib/schemas";
+import {
+  createUserSchema,
+  updateUserSchema,
+  type UserFormValues,
+} from "@/lib/schemas";
 import { userApi } from "@/lib/api";
 import type { User } from "@/lib/types";
 import { extractErrorMessage } from "@/lib/errors";
@@ -20,6 +24,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Eye, EyeOff } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "@/components/ui/toast";
 
 const ROLES = ["ADMIN", "MANAGER", "EMPLOYEE", "USER"] as const;
 
@@ -30,7 +37,10 @@ interface UserFormProps {
 }
 
 export function UserForm({ user, onClose, onSaved }: UserFormProps) {
+  const queryClient = useQueryClient();
+
   const [serverError, setServerError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const isEditMode = Boolean(user);
 
@@ -40,7 +50,7 @@ export function UserForm({ user, onClose, onSaved }: UserFormProps) {
     control,
     formState: { errors, isSubmitting },
   } = useForm<UserFormValues>({
-    resolver: zodResolver(userSchema),
+    resolver: zodResolver(isEditMode ? updateUserSchema : createUserSchema),
     defaultValues: {
       email: user?.email ?? "",
       password: "",
@@ -48,34 +58,63 @@ export function UserForm({ user, onClose, onSaved }: UserFormProps) {
     },
   });
 
-  async function onSubmit(values: UserFormValues) {
-    setServerError("");
-
-    try {
+  const mutation = useMutation({
+    mutationFn: async (values: UserFormValues) => {
       if (user) {
-        await userApi.update(user.id, {
+        return userApi.update(user.id, {
           email: values.email,
           ...(values.password ? { password: values.password } : {}),
           role: values.role,
         });
       } else {
-        await userApi.create({
+        return userApi.create({
           email: values.email,
-          password: values.password,
+          password: values.password as string,
           role: values.role,
         });
       }
-
+    },
+    onSuccess: async () => {
+      // Invalidate the users query cache so the table refetches fresh data automatically
+      await queryClient.invalidateQueries({
+        queryKey: ["users"],
+      });
       onSaved();
       onClose();
-    } catch (error) {
+
+      toast.add({
+        title: isEditMode ? "User updated" : "User created",
+        description: isEditMode
+          ? "The user was updated successfully."
+          : "The user was created successfully.",
+        type: "success",
+      });
+    },
+    onError: (error) => {
       setServerError(
         extractErrorMessage(
           error,
           isEditMode ? "Failed to update user." : "Failed to create user.",
         ),
       );
-    }
+
+      toast.add({
+        title: isEditMode ? "Failed to update user" : "Failed to create user",
+        description: extractErrorMessage(
+          error,
+          isEditMode
+            ? "The user could not be updated."
+            : "The user could not be created.",
+        ),
+        type: "error",
+      });
+    },
+  });
+
+  async function onSubmit(values: UserFormValues) {
+    setServerError("");
+
+    mutation.mutate(values);
   }
 
   return (
@@ -113,17 +152,32 @@ export function UserForm({ user, onClose, onSaved }: UserFormProps) {
         <div className="space-y-2">
           <Label htmlFor="password">Password {isEditMode && "*"}</Label>
 
-          <Input
-            id="password"
-            type="password"
-            placeholder={
-              isEditMode
-                ? "Leave blank to keep current password"
-                : "Enter a temporary password"
-            }
-            aria-invalid={Boolean(errors.password)}
-            {...register("password")}
-          />
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              placeholder={
+                isEditMode
+                  ? "Leave blank to keep current password"
+                  : "Enter a temporary password"
+              }
+              className="pr-10"
+              aria-invalid={!!errors.password}
+              {...register("password")}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-0 top-0 h-full px-3 py-2 text-muted-foreground hover:text-foreground focus:outline-none transition-colors cursor-pointer"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </button>
+          </div>
 
           {errors.password && (
             <p className="text-sm text-destructive">
@@ -139,38 +193,43 @@ export function UserForm({ user, onClose, onSaved }: UserFormProps) {
         </div>
 
         {/* Role */}
-        <div className="space-y-2">
-          <Label htmlFor="role">Role</Label>
+        {!isEditMode && (
+          <div className="space-y-2">
+            <Label htmlFor="role">Role</Label>
 
-          <Controller
-            name="role"
-            control={control}
-            render={({ field }) => (
-              <Select value={field.value ?? ""} onValueChange={field.onChange}>
-                <SelectTrigger id="role" className="w-full">
-                  <SelectValue placeholder="Select a role" />
-                </SelectTrigger>
+            <Controller
+              name="role"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  value={field.value ?? ""}
+                  onValueChange={field.onChange}
+                >
+                  <SelectTrigger id="role" className="w-full">
+                    <SelectValue placeholder="Select a role" />
+                  </SelectTrigger>
 
-                <SelectContent>
-                  {ROLES.map((role) => (
-                    <SelectItem key={role} value={role}>
-                      {formatRole(role)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                  <SelectContent>
+                    {ROLES.map((role) => (
+                      <SelectItem key={role} value={role}>
+                        {formatRole(role)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+
+            {errors.role && (
+              <p className="text-sm text-destructive">{errors.role.message}</p>
             )}
-          />
 
-          {errors.role && (
-            <p className="text-sm text-destructive">{errors.role.message}</p>
-          )}
-
-          <p className="text-xs text-muted-foreground">
-            The role determines which parts of the application the user can
-            access.
-          </p>
-        </div>
+            <p className="text-xs text-muted-foreground">
+              The role determines which parts of the application the user can
+              access.
+            </p>
+          </div>
+        )}
       </section>
 
       {serverError && (

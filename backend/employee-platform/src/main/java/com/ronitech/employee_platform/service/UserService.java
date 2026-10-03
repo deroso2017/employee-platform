@@ -1,7 +1,7 @@
 package com.ronitech.employee_platform.service;
 
 import com.ronitech.employee_platform.dto.CreateUserRequest;
-import com.ronitech.employee_platform.dto.auth.RegisterRequest;
+import com.ronitech.employee_platform.dto.UpdateUserRequest;
 import com.ronitech.employee_platform.dto.auth.RegisterResponse;
 import com.ronitech.employee_platform.entity.User;
 import com.ronitech.employee_platform.entity.enums.Role;
@@ -64,7 +64,7 @@ public class UserService {
     return response;
   }
 
-  public RegisterResponse createUser(CreateUserRequest request) {
+  public RegisterResponse create(CreateUserRequest request) {
     if (userRepository.findByEmail(request.email()).isPresent()) {
       throw new IllegalArgumentException(
         "A user with this email already exists."
@@ -81,7 +81,7 @@ public class UserService {
     return mapper.toResponse(savedUser);
   }
 
-  public RegisterResponse update(Long id, RegisterRequest request) {
+  public RegisterResponse update(Long id, UpdateUserRequest request) {
     User user = userRepository
       .findById(id)
       .orElseThrow(() ->
@@ -89,7 +89,9 @@ public class UserService {
       );
 
     user.setEmail(request.email());
-    user.setPassword(request.password());
+    if (request.password() != null && !request.password().isBlank()) {
+      user.setPassword(passwordEncoder.encode(request.password()));
+    }
 
     RegisterResponse response = mapper.toResponse(userRepository.save(user));
 
