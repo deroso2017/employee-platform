@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Navbar from "@/components/layout/Navbar";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Employees } from "@/components/employees/Employees";
@@ -31,8 +30,6 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-muted/20">
-      <Navbar />
-
       <PageContainer>
         <PageHeader
           title="Employees"
