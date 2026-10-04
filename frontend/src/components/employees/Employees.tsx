@@ -39,31 +39,10 @@ import { useDebounce } from "@/lib/hooks/useDebounce";
 import { toast } from "@/components/ui/toast";
 import { extractErrorMessage } from "@/lib/errors";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { useProfileImage } from "@/lib/hooks/useProfileImage";
 import { LinkUserDialog } from "./LinkUserDialog";
 import { EmployeesSkeleton } from "./EmployeesSkeleton";
-
-const DEFAULT_AVATAR = "/default-avatar.svg";
-
-function EmployeeAvatar({ employee }: { employee: Employee }) {
-  const apiSrc = employee.profileImage
-    ? employeeApi.profileImageUrl(employee.id)
-    : null;
-
-  const blobUrl = useProfileImage(apiSrc);
-  const src = blobUrl ?? DEFAULT_AVATAR;
-
-  return (
-    <div className="size-10 shrink-0 overflow-hidden rounded-full border border-border bg-muted">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={src}
-        alt={`${employee.firstName} ${employee.lastName}`}
-        className="size-full object-cover"
-      />
-    </div>
-  );
-}
+import { EmployeeAvatar } from "./EmployeeAvatar";
+import { cn } from "cn";
 
 function getInitials(employee: Employee) {
   return `${employee.firstName.charAt(0)}${employee.lastName.charAt(
@@ -82,22 +61,20 @@ export function Employees({ onEdit, onAdd }: EmployeesProps) {
 
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
-
   const debouncedSearch = useDebounce(search, 400);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-
   const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(
     null,
   );
 
-  const canCreate = user?.role === "ADMIN" || user?.role === "MANAGER";
-
-  const canEdit = user?.role === "ADMIN";
-  const canDelete = user?.role === "ADMIN";
-
   const [linkUserDialogOpen, setLinkUserDialogOpen] = useState(false);
   const [employeeToLink, setEmployeeToLink] = useState<Employee | null>(null);
+
+  const canCreate = user?.role === "ADMIN" || user?.role === "MANAGER";
+  const canEdit = user?.role === "ADMIN";
+  const canDelete = user?.role === "ADMIN";
+  const hasActions = canEdit || canDelete;
 
   const { data, isLoading, isFetching, isError } = useQuery({
     queryKey: ["employees", page, debouncedSearch],
@@ -178,8 +155,6 @@ export function Employees({ onEdit, onAdd }: EmployeesProps) {
     setLinkUserDialogOpen(true);
   }
 
-  const hasActions = canEdit || canDelete;
-
   if (isLoading) return <EmployeesSkeleton />;
 
   return (
@@ -203,7 +178,16 @@ export function Employees({ onEdit, onAdd }: EmployeesProps) {
                   type="button"
                   onClick={handleClear}
                   aria-label="Clear search"
-                  className="absolute right-2 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className={cn(
+                    // Positioning
+                    "absolute right-2 top-1/2 -translate-y-1/2",
+                    // Layout & Sizing
+                    "flex size-7 items-center justify-center rounded-md",
+                    // Colors & Typography
+                    "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    // Interactive & Focus States
+                    "transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  )}
                 >
                   <X className="size-4" />
                 </button>
@@ -362,7 +346,15 @@ export function Employees({ onEdit, onAdd }: EmployeesProps) {
                         <DropdownMenu>
                           <DropdownMenuTrigger
                             aria-label={`Actions for ${getInitials(employee)}`}
-                            className="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                            className={cn(
+                              // Layout & Sizing
+                              "inline-flex size-9 items-center justify-center",
+                              // Typography & Colors
+                              "rounded-md text-muted-foreground hover:bg-muted hover:text-foreground",
+                              // Interactive & States
+                              "outline-none transition-colors cursor-pointer",
+                              "focus-visible:ring-2 focus-visible:ring-ring",
+                            )}
                           >
                             <MoreHorizontal className="size-4" />
                           </DropdownMenuTrigger>

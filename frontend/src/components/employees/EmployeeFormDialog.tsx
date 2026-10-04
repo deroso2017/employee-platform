@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-
 import {
   Dialog,
   DialogContent,
@@ -9,10 +8,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
 import { departmentApi } from "@/lib/api";
 import type { Department, Employee } from "@/lib/types";
-
 import { EmployeeForm } from "./EmployeeForm";
 
 interface EmployeeFormDialogProps {
@@ -35,7 +32,6 @@ export function EmployeeFormDialog({
   );
 
   const departments: Department[] = departmentsResponse?.data ?? [];
-
   const isEditing = Boolean(employee);
 
   function handleClose() {
