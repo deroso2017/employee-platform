@@ -1,8 +1,8 @@
 package com.ronitech.employee_platform.controller;
 
 import com.ronitech.employee_platform.dto.CreateUserRequest;
+import com.ronitech.employee_platform.dto.UpdateUserRequest;
 import com.ronitech.employee_platform.dto.auth.ChangeRoleRequest;
-import com.ronitech.employee_platform.dto.auth.RegisterRequest;
 import com.ronitech.employee_platform.dto.auth.RegisterResponse;
 import com.ronitech.employee_platform.service.UserService;
 import jakarta.validation.Valid;
@@ -25,7 +25,7 @@ public class UserController {
   public RegisterResponse createUser(
     @Valid @RequestBody CreateUserRequest request
   ) {
-    return service.createUser(request);
+    return service.create(request);
   }
 
   @GetMapping
@@ -46,7 +46,7 @@ public class UserController {
   @PutMapping("/{id}")
   public RegisterResponse updateUser(
     @PathVariable Long id,
-    @Valid @RequestBody RegisterRequest request
+    @Valid @RequestBody UpdateUserRequest request
   ) {
     return service.update(id, request);
   }
