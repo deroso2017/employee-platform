@@ -13,7 +13,7 @@ import {
   persistRefreshToken,
   getCurrentUser,
 } from "@/lib/auth";
-import { authApi, setAuthInitialized as markAuthInitialized } from "@/lib/api";
+import { authApi, doRefreshToken } from "@/lib/api";
 import type { User } from "@/lib/types";
 import { useRouter } from "next/navigation";
 
@@ -36,22 +36,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authInitialized, setAuthInitializedState] = useState(false);
   const router = useRouter();
 
-  // On mount: try to restore session by silently refreshing via httpOnly cookie
   useEffect(() => {
     (async () => {
       try {
-        // The httpOnly cookie is sent automatically by the browser
-        const data = await authApi.refreshToken();
-        setAccessToken(data.accessToken);
-        await persistRefreshToken(data.refreshToken);
+        const accessToken = await doRefreshToken();
+        setAccessToken(accessToken);
         setUser(getCurrentUser());
       } catch {
-        // No valid session — clean up and redirect to login
-        clearAccessToken();
+        // No valid session — user needs to log in
         setUser(null);
-        window.location.href = "/login";
+        router.push("/login");
       } finally {
-        markAuthInitialized();
         setAuthInitializedState(true);
         setLoading(false);
       }

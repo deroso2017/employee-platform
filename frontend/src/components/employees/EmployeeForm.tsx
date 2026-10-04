@@ -4,18 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Upload, UserRound } from "lucide-react";
-
 import { employeeSchema, type EmployeeFormValues } from "@/lib/schemas";
-
 import { employeeApi } from "@/lib/api";
 import type { Department, Employee } from "@/lib/types";
-
 import { useProfileImage } from "@/lib/hooks/useProfileImage";
-
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-
 import {
   Select,
   SelectContent,
@@ -23,16 +18,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
 import { extractErrorMessage } from "@/lib/errors";
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-
 import { toast } from "../ui/toast";
+import { DEFAULT_AVATAR } from "./EmployeeAvatar";
+import { cn } from "@/lib/utils";
 
-const DEFAULT_AVATAR = "/default-avatar.svg";
-
-interface FormProps {
+interface EmployeeFormProps {
   employee: Employee | null | undefined;
   departments: Department[];
   onClose: () => void;
@@ -44,23 +36,20 @@ export function EmployeeForm({
   departments,
   onClose,
   onSaved,
-}: FormProps) {
+}: EmployeeFormProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
+
   const [serverError, setServerError] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const queryClient = useQueryClient();
 
   const isEditing = Boolean(employee);
 
   const savedImageApiUrl = employee?.profileImage
     ? employeeApi.profileImageUrl(employee.id)
     : null;
-
   const savedBlobUrl = useProfileImage(savedImageApiUrl);
-
   const displayUrl = previewUrl ?? savedBlobUrl ?? DEFAULT_AVATAR;
 
   const {
@@ -195,7 +184,14 @@ export function EmployeeForm({
             </div>
 
             {!previewUrl && !savedBlobUrl && (
-              <div className="absolute bottom-0 right-0 flex size-7 items-center justify-center rounded-full border-2 border-background bg-muted text-muted-foreground">
+              <div
+                className={cn(
+                  "absolute bottom-0 right-0",
+                  "flex size-7 items-center justify-center rounded-full",
+                  "border-2 border-background bg-muted",
+                  "text-muted-foreground",
+                )}
+              >
                 <UserRound className="size-3.5" />
               </div>
             )}

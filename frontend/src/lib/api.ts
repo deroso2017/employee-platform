@@ -26,12 +26,8 @@ const api = axios.create({
 });
 
 let refreshPromise: Promise<string> | null = null;
-let _authInitialized = false;
-export function setAuthInitialized() {
-  _authInitialized = true;
-}
 
-function doRefresh(): Promise<string> {
+export function doRefreshToken(): Promise<string> {
   if (!refreshPromise) {
     refreshPromise = fetch("/api/auth/set-tokens", {
       method: "POST",
@@ -72,10 +68,12 @@ api.interceptors.request.use(async (config) => {
 
   if (isAccessTokenExpired()) {
     try {
-      const newToken = await doRefresh();
+      const newToken = await doRefreshToken();
       config.headers.Authorization = `Bearer ${newToken}`;
     } catch {
-      if (_authInitialized) {
+      // doRefreshToken failed — session is unrecoverable only if we already had
+      // a token before (i.e. not the very first load where token is just absent)
+      if (getAccessToken() !== null) {
         clearAccessToken();
         window.dispatchEvent(new Event("auth:logout"));
         return Promise.reject(new Error("Session expired"));
@@ -98,14 +96,14 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true;
       try {
-        const newToken = await doRefresh();
+        const newToken = await doRefreshToken();
         original.headers.Authorization = `Bearer ${newToken}`;
         return api(original);
       } catch {
-        // Both the original request and the refresh attempt failed —
-        // session is unrecoverable, redirect to /login.
-        clearAccessToken();
-        window.dispatchEvent(new Event("auth:logout"));
+        if (getAccessToken() !== null) {
+          clearAccessToken();
+          window.dispatchEvent(new Event("auth:logout"));
+        }
         return Promise.reject(error);
       }
     }

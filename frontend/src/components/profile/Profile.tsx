@@ -95,7 +95,7 @@ export default function Profile() {
             {employee && employee.profileImage ? (
               <EmployeeAvatar employee={employee} />
             ) : (
-              <div className="border flex size-20 shrink-0 items-center justify-center rounded-2xl border-4 border-card bg-primary text-xl font-semibold text-primary-foreground shadow-sm sm:size-24">
+              <div className="flex size-20 shrink-0 items-center justify-center rounded-2xl border-4 border-card bg-primary text-xl font-semibold text-primary-foreground shadow-sm sm:size-24">
                 {initials}
               </div>
             )}
