@@ -78,6 +78,12 @@ export default function TeamMembersDialog({
     [employees, memberIds],
   );
 
+  // Find the currently selected employee object to display their name
+  const selectedEmployee = useMemo(
+    () => employees.find((emp) => emp.id.toString() === selectedEmployeeId),
+    [employees, selectedEmployeeId],
+  );
+
   const addMutation = useMutation({
     mutationFn: (employeeId: number) => teamApi.addMember(team.id, employeeId),
 
@@ -208,7 +214,11 @@ export default function TeamMembersDialog({
                 disabled={employeesLoading || addMutation.isPending}
               >
                 <SelectTrigger className="min-w-0 flex-1">
-                  <SelectValue placeholder="Select employee" />
+                  <SelectValue placeholder="Select employee">
+                    {selectedEmployee
+                      ? `${selectedEmployee.firstName} ${selectedEmployee.lastName}`
+                      : "Select employee"}
+                  </SelectValue>
                 </SelectTrigger>
 
                 <SelectContent>

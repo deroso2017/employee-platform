@@ -42,6 +42,7 @@ import {
 
 import UserFormDialog from "@/components/users/UserFormDialog";
 import { UserRoleDialog } from "./UserRoleDialog";
+import { cn } from "cn";
 
 interface UsersProps {
   createOpen: boolean;
@@ -228,7 +229,12 @@ export function Users({ createOpen, onCreateOpenChange }: UsersProps) {
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger
-                          className="inline-flex size-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                          className={cn(
+                            "inline-flex size-8 items-center justify-center rounded-md",
+                            "border border-border bg-background",
+                            "text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+                            "cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                          )}
                           aria-label={`Actions for ${currentUser.email}`}
                         >
                           <MoreHorizontal
