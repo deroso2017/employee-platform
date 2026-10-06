@@ -16,7 +16,7 @@ export default function UsersPage() {
   const canCreate = user?.role === "ADMIN";
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-muted/20">
       <PageContainer>
         <PageHeader
           title="Users"

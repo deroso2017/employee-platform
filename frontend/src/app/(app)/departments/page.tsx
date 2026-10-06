@@ -7,7 +7,7 @@ import { RefreshButton } from "@/components/ui/RefreshButton";
 
 export default function DepartmentsPage() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-muted/20">
       <PageContainer>
         <PageHeader
           title="Departments"

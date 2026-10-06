@@ -6,15 +6,11 @@ import { MoreHorizontal, Pencil, Search, Trash2 } from "lucide-react";
 
 import { projectApi, taskApi } from "@/lib/api";
 import type { Project, Task, TaskPriority, TaskStatus } from "@/lib/types";
-
 import { useAuth } from "@/context/AuthContext";
-
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { toast } from "@/components/ui/toast";
-
 import {
   Table,
   TableBody,
@@ -23,7 +19,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,7 +26,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
 import {
   Select,
   SelectContent,
@@ -41,6 +35,7 @@ import {
 } from "@/components/ui/select";
 
 import { TaskFormDialog } from "@/components/tasks/TaskFormDialog";
+import { cn } from "@/lib/utils";
 
 interface TasksProps {
   createOpen: boolean;
@@ -332,7 +327,12 @@ export function Tasks({ createOpen, onCreateOpenChange }: TasksProps) {
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger
-                            className="inline-flex size-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                            className={cn(
+                              "inline-flex size-8 items-center justify-center rounded-md",
+                              "border border-border bg-background",
+                              "text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+                              "cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                            )}
                             aria-label={`Actions for ${task.title}`}
                           >
                             <MoreHorizontal
