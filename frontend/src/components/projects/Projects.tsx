@@ -38,6 +38,7 @@ import {
 import { toast } from "@/components/ui/toast";
 
 import { extractErrorMessage } from "@/lib/errors";
+import { cn } from "cn";
 
 const STATUS_LABELS: Record<ProjectStatus, string> = {
   PLANNED: "Planned",
@@ -289,7 +290,13 @@ export function Projects() {
                       <TableCell className="pr-6 text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger
-                            className="inline-flex cursor-pointer h-8 w-8 items-center justify-center rounded-md border border-transparent text-muted-foreground transition-colors hover:border-border hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            className={cn(
+                              "inline-flex h-8 w-8 items-center justify-center rounded-md",
+                              "border border-transparent",
+                              "text-muted-foreground",
+                              "cursor-pointer transition-colors hover:border-border hover:bg-muted hover:text-foreground",
+                              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                            )}
                             aria-label={`Actions for ${project.name}`}
                             onClick={(e) => e.stopPropagation()}
                           >
