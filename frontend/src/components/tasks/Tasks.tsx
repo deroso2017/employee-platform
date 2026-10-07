@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { MoreHorizontal, Pencil, Search, Trash2 } from "lucide-react";
 
 import { projectApi, taskApi } from "@/lib/api";
-import type { Project, Task, TaskPriority, TaskStatus } from "@/lib/types";
+import type { Project, Task } from "@/lib/types";
 import { useAuth } from "@/context/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
@@ -36,6 +36,9 @@ import {
 
 import { TaskFormDialog } from "@/components/tasks/TaskFormDialog";
 import { cn } from "@/lib/utils";
+import { EmptyTasksState } from "./EmptyTasksState";
+import { TasksStatusBadge } from "./TasksStatusBadge";
+import { TasksPriorityBadge } from "./TasksPriorityBadge";
 
 interface TasksProps {
   createOpen: boolean;
@@ -253,13 +256,13 @@ export function Tasks({ createOpen, onCreateOpenChange }: TasksProps) {
 
       {/* Content */}
       {!selectedProject ? (
-        <EmptyState message="No projects available." />
+        <EmptyTasksState message="No projects available." />
       ) : tasksLoading ? (
         <div className="flex min-h-[320px] items-center justify-center rounded-xl border border-border bg-card shadow-sm">
           <Spinner />
         </div>
       ) : filteredTasks.length === 0 ? (
-        <EmptyState
+        <EmptyTasksState
           message={
             search.trim()
               ? "No tasks match your search."
@@ -306,11 +309,11 @@ export function Tasks({ createOpen, onCreateOpenChange }: TasksProps) {
                     </TableCell>
 
                     <TableCell>
-                      <StatusBadge status={task.status} />
+                      <TasksStatusBadge status={task.status} />
                     </TableCell>
 
                     <TableCell>
-                      <PriorityBadge priority={task.priority} />
+                      <TasksPriorityBadge priority={task.priority} />
                     </TableCell>
 
                     <TableCell>
@@ -417,83 +420,5 @@ export function Tasks({ createOpen, onCreateOpenChange }: TasksProps) {
         }}
       />
     </div>
-  );
-}
-
-function EmptyState({ message }: { message: string }) {
-  return (
-    <div className="flex min-h-[320px] items-center justify-center rounded-xl border border-dashed border-border bg-card px-6 shadow-sm">
-      <div className="text-center">
-        <p className="text-sm font-medium text-foreground">{message}</p>
-
-        <p className="mt-1 text-xs text-muted-foreground">
-          {message === "No projects available."
-            ? "Create a project first to start managing tasks."
-            : "Try adjusting your search or create a new task."}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function StatusBadge({ status }: { status: TaskStatus }) {
-  const config: Record<TaskStatus, { label: string; className: string }> = {
-    TODO: {
-      label: "To Do",
-      className: "bg-muted text-muted-foreground",
-    },
-    IN_PROGRESS: {
-      label: "In Progress",
-      className: "bg-info/10 text-info",
-    },
-    DONE: {
-      label: "Done",
-      className: "bg-success/10 text-success",
-    },
-    CANCELLED: {
-      label: "Cancelled",
-      className: "bg-destructive/10 text-destructive",
-    },
-  };
-
-  const item = config[status];
-
-  return (
-    <span
-      className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${item.className}`}
-    >
-      {item.label}
-    </span>
-  );
-}
-
-function PriorityBadge({ priority }: { priority: TaskPriority }) {
-  const config: Record<TaskPriority, { label: string; className: string }> = {
-    LOW: {
-      label: "Low",
-      className: "bg-muted text-muted-foreground",
-    },
-    MEDIUM: {
-      label: "Medium",
-      className: "bg-info/10 text-info",
-    },
-    HIGH: {
-      label: "High",
-      className: "bg-warning/10 text-warning",
-    },
-    URGENT: {
-      label: "Urgent",
-      className: "bg-destructive/10 text-destructive",
-    },
-  };
-
-  const item = config[priority];
-
-  return (
-    <span
-      className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${item.className}`}
-    >
-      {item.label}
-    </span>
   );
 }

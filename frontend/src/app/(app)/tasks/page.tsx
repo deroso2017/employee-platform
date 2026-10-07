@@ -16,7 +16,7 @@ export default function TasksPage() {
   const canCreate = user?.role === "ADMIN" || user?.role === "MANAGER";
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-muted/20">
       <PageContainer>
         <PageHeader
           title="Tasks"

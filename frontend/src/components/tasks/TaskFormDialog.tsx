@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckSquare, FolderKanban, UserRound } from "lucide-react";
 
-import { employeeApi, taskApi, teamApi } from "@/lib/api";
+import { taskApi, teamApi } from "@/lib/api";
 import type {
   Employee,
   Project,
@@ -175,6 +175,18 @@ export function TaskFormDialog({
     title.trim().length > 0 &&
     title.trim().length <= 255 &&
     !mutation.isPending;
+
+  function getAssigneeDisplayValue(
+    assigneeId: string,
+    members: Employee[],
+  ): string {
+    if (!assigneeId) return "Unassigned";
+
+    const assignedMember = members.find((m) => String(m.id) === assigneeId);
+    return assignedMember
+      ? `${assignedMember.firstName} ${assignedMember.lastName}`
+      : "Unassigned";
+  }
 
   return (
     <Dialog
@@ -364,7 +376,9 @@ export function TaskFormDialog({
                   disabled={mutation.isPending || membersLoading}
                 >
                   <SelectTrigger id="task-assignee" className="w-full">
-                    <SelectValue placeholder="Unassigned" />
+                    <SelectValue placeholder="Unassigned">
+                      {getAssigneeDisplayValue(assigneeId, members)}
+                    </SelectValue>
                   </SelectTrigger>
 
                   <SelectContent>
